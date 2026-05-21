@@ -42,12 +42,13 @@ module.exports.booksRouter = r2;
 
 // routes/borrows.js
 const r3 = require('express').Router();
-const { borrowBook, returnBook, renewBorrow, getBorrows, getMyBorrows, generateBill, exportBorrowsExcel } = require('../controllers/borrowController');
+const { borrowBook, returnBook, returnByCopyCode, renewBorrow, getBorrows, getMyBorrows, generateBill, exportBorrowsExcel } = require('../controllers/borrowController');
 const { protect: p3, authorize: a3 } = require('../middleware/auth');
 r3.get('/', p3, a3('admin','librarian'), getBorrows);
 r3.get('/export', p3, a3('admin','librarian'), exportBorrowsExcel);
 r3.get('/my', p3, getMyBorrows);
 r3.post('/', p3, a3('admin','librarian'), borrowBook);
+r3.put('/return-by-code/:code', p3, a3('admin','librarian'), returnByCopyCode);
 r3.put('/:id/return', p3, a3('admin','librarian'), returnBook);
 r3.put('/:id/renew', p3, renewBorrow);
 r3.get('/:id/bill', p3, a3('admin','librarian'), generateBill);

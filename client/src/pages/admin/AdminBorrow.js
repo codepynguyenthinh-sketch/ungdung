@@ -201,31 +201,12 @@ export default function AdminBorrow() {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Lỗi tạo mượn sách');
     } finally { setSaving(false); }
-  };
-
-  // ── In bill toàn bộ phiếu mượn ──
-  const handlePrintAll = () => {
-    printBill({
-      student: selectedStudent,
-      books: selectedBooks,
-      borrows: createdBorrows,
-      borrowType,
-      librarian,
-    });
-  };
-
-  const handleReset = () => {
-    setStep(1); setSelectedStudent(null); setSelectedBooks([]);
-    setSelectedBook(null); setFoundCopy(null); setCodeInput('');
-    setStudentSearch(''); setBookSearch(''); setCreatedBorrows([]);
-  };
-
-  // ── Styles tái sử dụng ──
-  const cardHeader = (text) => (
-    <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0' }}>
-      <h3 style={{ margin: 0, fontSize: 16 }}>{text}</h3>
-    </div>
-  );
+          try {
+            const helper = await import('../../services/searchHelper');
+            const r = await helper.default(val, { bookLimit: 6 });
+            if (r.type === 'copy') setFoundCopy(r.data);
+            else setFoundCopy(null);
+          } catch (err) { setFoundCopy(null); }
 
   const infoLabel = { fontSize: 12, color: '#64748b', marginBottom: 4 };
   const infoValue = { fontSize: 14, fontWeight: 600 };

@@ -13,6 +13,7 @@ import {
 } from 'react-icons/fi';
 import Layout from '../../components/common/Layout';
 import api from '../../services/api';
+import findCopyOrBooks from '../../services/searchHelper';
 import { useAuth } from '../../context/AuthContext';
 
 /* ── Làm tròn tiền thế chân lên bội số 5 gần nhất ── */
@@ -85,9 +86,9 @@ function BorrowTab() {
     if (!val.trim()) { setFoundCopy(null); return; }
     codeDebounce.current = setTimeout(async () => {
       try {
-        const res = await api.get(`/copies/find/${val}`);
-        if (res.data.success) {
-          const copy = res.data.data;
+        const result = await findCopyOrBooks(val, { bookLimit: 6 });
+        if (result.type === 'copy') {
+          const copy = result.data;
           setFoundCopy(copy);
           if (selectedBooks.length < 4) {
             setTimeout(() => {
@@ -99,7 +100,9 @@ function BorrowTab() {
               setCodeInput(''); setFoundCopy(null);
             }, 300);
           } else { toast.error('Đã đủ 4 cuốn!'); }
-        } else { setFoundCopy(null); toast.error('Mã sách không tồn tại'); }
+        } else if (result.type === 'books') {
+          setBookList(result.data || []);
+        }
       } catch (err) { setFoundCopy(null); toast.error(err.response?.data?.message || 'Lỗi tìm sách'); }
     }, 500);
   };
@@ -441,6 +444,31 @@ function ReturnTab() {
   const [returning, setReturning]         = useState(false);
   const debounce = useRef(null);
 
+  const [codeInput, setCodeInput]           = useState('');
+  const [codeReturning, setCodeReturning]   = useState(false);
+  const [returnedList, setReturnedList]     = useState([]);
+
+  const handleReturnByCode = async (code) => {
+    const val = (code || codeInput).trim();
+    if (!val) return;
+    setCodeReturning(true);
+    try {
+      const res = await api.put(`/borrows/return-by-code/${val}`);
+      const data = res.data.data;
+      const fineInfo = res.data.fine;
+      setReturnedList(prev => [{ ...data, fineInfo }, ...prev]);
+      toast.success(`Trả sách thành công: ${data.book?.title || val}`);
+      setCodeInput('');
+      if (studentInfo && data.user_id === studentInfo.id) {
+        const bRes = await api.get('/borrows', { params: { user_id: studentInfo.id, status:'borrowed', limit:20 } });
+        const overRes = await api.get('/borrows', { params: { user_id: studentInfo.id, status:'overdue', limit:20 } });
+        setBorrows([...(bRes.data.data||[]), ...(overRes.data.data||[])]);
+        setSelected({});
+      }
+    } catch (err) { toast.error(err.response?.data?.message || 'Lỗi trả sách'); }
+    finally { setCodeReturning(false); }
+  };
+
   const handleSearch = (val) => {
     setSearchInput(val);
     clearTimeout(debounce.current);
@@ -491,13 +519,58 @@ function ReturnTab() {
   const selectedIds = Object.entries(selected).filter(([,v])=>v).map(([k])=>k);
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'400px 1fr', gap:20, alignItems:'start' }}>
+    <div>
+      {/* Quick return by ĐKCB */}
+      <div style={{ background:'#fff', borderRadius:12, border:'2px solid #16a34a', overflow:'hidden', marginBottom:20 }}>
+        <div style={{ padding:'14px 20px', borderBottom:'1px solid #bbf7d0', background:'linear-gradient(135deg,#f0fdf4,#fff)',
+          display:'flex', alignItems:'center', gap:8 }}>
+          <FiBook size={15} color="#16a34a"/>
+          <span style={{ fontWeight:700, fontSize:15, color:'#16a34a' }}>Trả nhanh bằng mã ĐKCB</span>
+          <span style={{ fontSize:12, color:'#64748b', marginLeft:'auto' }}>Nhập mã ĐKCB rồi nhấn Enter</span>
+        </div>
+        <div style={{ padding:'16px 20px', display:'flex', gap:10, alignItems:'center' }}>
+          <div style={{ position:'relative', flex:1 }}>
+            <FiSearch style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', color:'#16a34a' }}/>
+            <input style={{ width:'100%', padding:'12px 12px 12px 36px', border:'2px solid #bbf7d0',
+              borderRadius:8, fontSize:16, fontFamily:'monospace', fontWeight:700, outline:'none',
+              background:'#f0fdf4' }}
+              placeholder="VD: LIB-2025-00001"
+              value={codeInput}
+              onChange={e => setCodeInput(e.target.value.toUpperCase())}
+              onKeyDown={e => { if (e.key === 'Enter') handleReturnByCode(); }}
+              disabled={codeReturning}
+              autoFocus />
+          </div>
+          <button onClick={() => handleReturnByCode()} disabled={codeReturning || !codeInput.trim()}
+            className="btn btn-success" style={{ padding:'12px 24px', fontSize:14, whiteSpace:'nowrap' }}>
+            <FiCornerDownLeft size={14}/>
+            {codeReturning ? 'Đang trả...' : 'Trả sách'}
+          </button>
+        </div>
+        {returnedList.length > 0 && (
+          <div style={{ padding:'0 20px 16px' }}>
+            <div style={{ fontSize:12, fontWeight:600, color:'#64748b', marginBottom:6 }}>Vừa trả ({returnedList.length}):</div>
+            {returnedList.slice(0, 5).map((r, i) => (
+              <div key={r.id || i} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px',
+                background:'#f0fdf4', borderRadius:6, marginBottom:4, fontSize:12 }}>
+                <FiCheck size={12} color="#16a34a"/>
+                <span style={{ fontFamily:'monospace', fontWeight:700, color:'#2563eb' }}>{r.copy?.copy_code}</span>
+                <span style={{ color:'#1e293b' }}>{r.book?.title}</span>
+                <span style={{ color:'#64748b' }}>· {r.user?.name}</span>
+                {r.fineInfo && <span style={{ color:'#dc2626', fontWeight:600 }}>· Phạt {Number(r.fineInfo.amount).toLocaleString('vi-VN')}đ</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'400px 1fr', gap:20, alignItems:'start' }}>
       {/* Search panel */}
       <div style={{ background:'#fff', borderRadius:12, border:'1px solid #e2e8f0', overflow:'hidden' }}>
         <div style={{ padding:'16px 20px', borderBottom:'1px solid #e2e8f0', background:'linear-gradient(135deg,#f8fafc,#fff)',
           display:'flex', alignItems:'center', gap:8 }}>
           <FiCornerDownLeft size={15} color="#16a34a"/>
-          <span style={{ fontWeight:700, fontSize:15 }}>Tìm sinh viên trả sách</span>
+          <span style={{ fontWeight:700, fontSize:15 }}>Hoặc tìm sinh viên trả sách</span>
         </div>
         <div style={{ padding:20 }}>
           <div style={{ position:'relative', marginBottom:14 }}>
@@ -568,8 +641,12 @@ function ReturnTab() {
                         <div style={{ fontSize:11, color:'#64748b', marginBottom:4 }}>{b.book?.author}</div>
                         <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                           {b.copy?.copy_code && (
-                            <span style={{ fontSize:10, background:'#eff6ff', color:'#2563eb', padding:'1px 7px', borderRadius:8, fontFamily:'monospace', fontWeight:700 }}>
-                              {b.copy.copy_code}
+                            <span onClick={(e) => { e.stopPropagation(); handleReturnByCode(b.copy.copy_code); }}
+                              title="Click để trả sách này"
+                              style={{ fontSize:10, background:'#dcfce7', color:'#16a34a', padding:'2px 8px', borderRadius:8,
+                                fontFamily:'monospace', fontWeight:700, cursor:'pointer', border:'1px solid #bbf7d0',
+                                transition:'all .15s' }}>
+                              {b.copy.copy_code} ↩
                             </span>
                           )}
                           <span style={{ fontSize:10, padding:'1px 7px', borderRadius:8, fontWeight:600,
@@ -609,6 +686,7 @@ function ReturnTab() {
           </p>
         </div>
       )}
+    </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-const { Op } = require('sequelize');
+const { Op, fn, col, where: sequelizeWhere } = require('sequelize');
 const fs = require('fs');
-const { Book, Category, Department } = require('../models');
+const { Book, Category, Department, BookCopy } = require('../models');
 const { isLanIP } = require('../middleware/lanAccess');
 const { parseBooksFile, exportBooks } = require('../utils/excelExport');
 const cloudinary = require('cloudinary').v2;
@@ -38,11 +38,22 @@ exports.getBooks = async (req, res) => {
     const { search, category, department, available, has_pdf, page = 1, limit = 12, sort = 'created_at', order = 'DESC' } = req.query;
     const where = { is_active: true };
 
+    let copySearch = null;
     if (search) {
+      const likeSearch = `%${search}%`;
       where[Op.or] = [
-        { title:  { [Op.iLike]: `%${search}%` } },
-        { author: { [Op.iLike]: `%${search}%` } },
-        { isbn:   { [Op.iLike]: `%${search}%` } },
+        { title:       { [Op.iLike]: likeSearch } },
+        { author:      { [Op.iLike]: likeSearch } },
+        { isbn:        { [Op.iLike]: likeSearch } },
+        { publisher:   { [Op.iLike]: likeSearch } },
+        { location:    { [Op.iLike]: likeSearch } },
+        { edition:     { [Op.iLike]: likeSearch } },
+        { language:    { [Op.iLike]: likeSearch } },
+        { description: { [Op.iLike]: likeSearch } },
+        { '$category.name$':   { [Op.iLike]: likeSearch } },
+        { '$department.name$': { [Op.iLike]: likeSearch } },
+        { '$copies.copy_code$': { [Op.iLike]: likeSearch } },
+        sequelizeWhere(fn('array_to_string', col('Book.tags'), ' '), { [Op.iLike]: likeSearch }),
       ];
     }
     if (category)              where.category_id      = category;
@@ -52,24 +63,34 @@ exports.getBooks = async (req, res) => {
     if (has_pdf === 'true')    where.pdf_url = { [Op.ne]: null };
     if (has_pdf === 'false')   where.pdf_url = null;
 
+    const include = [
+      { 
+        model: Category, 
+        as: 'category', 
+        attributes: ['id', 'name'],
+        where: { is_active: true },
+        required: false,
+      },
+      {
+        model: Department,
+        as: 'department',
+        attributes: ['id', 'name'],
+        where: { is_active: true },
+        required: false,
+      },
+    ];
+
+    include.push({
+      model: BookCopy,
+      as: 'copies',
+      attributes: [],
+      required: false,
+    });
+
     const { count, rows } = await Book.findAndCountAll({
       where,
-      include: [
-        { 
-          model: Category, 
-          as: 'category', 
-          attributes: ['id', 'name'],
-          where: { is_active: true },
-          required: false,
-        },
-        {
-          model: Department,
-          as: 'department',
-          attributes: ['id', 'name'],
-          where: { is_active: true },
-          required: false,
-        },
-      ],
+      include,
+      distinct: true,
       order: [[sort, order]],
       limit: parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),

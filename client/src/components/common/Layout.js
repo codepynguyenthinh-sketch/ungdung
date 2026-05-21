@@ -12,8 +12,8 @@ export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth > 768 : true);
   const [borrowOpen, setBorrowOpen] = useState(
     // Mở sẵn nếu đang ở trang mượn/trả
     location.pathname.startsWith('/admin/borrow') || location.pathname.startsWith('/admin/return')
@@ -40,8 +40,8 @@ export default function Layout({ children }) {
     { to: '/',                icon: <FiHome />,      label: 'Trang chủ' },
     { to: '/books',           icon: <FiBook />,      label: 'Danh mục sách' },
     { to: '/my-borrows',      icon: <FiList />,      label: 'Sách đang mượn' },
-    ...(!isAdmin ? [{ to: '/my-reservations', icon: <FiBookmark />, label: 'Đặt trước' }] : []),
     { to: '/my-fines',        icon: <FiDollarSign />,label: 'Phí phạt' },
+    ...(!isAdmin ? [{ to: '/my-reservations', icon: <FiBookmark />, label: 'Đặt trước' }] : []),
     { to: '/profile',         icon: <FiUser />,      label: 'Tài khoản' },
   ];
 

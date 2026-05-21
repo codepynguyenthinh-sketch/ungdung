@@ -40,21 +40,28 @@ export default function AdminReturn() {
 
         // Thử tìm bằng mã sách trước
         try {
-          const copyRes = await api.get(`/copies/find/${val}`);
-          if (copyRes.data.success) {
-            copy = copyRes.data.data;
-            // Tìm borrow của sách này
-            const borrowRes = await api.get('/borrows', { params: { limit: 100, page: 1 } });
+          // Try copy or books
+          const { default: findCopyOrBooks } = await import('../../services/searchHelper');
+          const r = await findCopyOrBooks(val, { bookLimit: 200 });
+          if (r.type === 'copy') {
+            copy = r.data;
+            const borrowRes = await api.get('/borrows', { params: { limit: 200, page: 1 } });
             const activeBorrow = borrowRes.data.data?.find(b => 
               b.book_id === copy.book_id && 
               ['borrowed', 'renewed', 'overdue'].includes(b.status)
             );
-            if (activeBorrow) {
-              userId = activeBorrow.user_id;
+            if (activeBorrow) userId = activeBorrow.user_id;
+          } else if (r.type === 'books' && Array.isArray(r.data) && r.data.length) {
+            // If found books by title, try to find borrows for those books
+            const borrowRes = await api.get('/borrows', { params: { limit: 200, page: 1 } });
+            const candidates = borrowRes.data.data?.filter(b => ['borrowed','renewed','overdue'].includes(b.status)) || [];
+            for (const bk of r.data) {
+              const ab = candidates.find(c => c.book_id === bk.id);
+              if (ab) { userId = ab.user_id; break; }
             }
           }
         } catch (e) {
-          // Không tìm thấy mã sách, thử tìm theo mã sinh viên
+          // ignore
         }
 
         // Nếu không tìm được bằng mã sách, tìm bằng mã sinh viên

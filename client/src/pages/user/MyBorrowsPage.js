@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { FiRefreshCw, FiClock, FiBook } from 'react-icons/fi';
 import Layout from '../../components/common/Layout';
@@ -7,18 +8,34 @@ import api from '../../services/api';
 const statusMap = { borrowed: ['Đang mượn', 'badge-success'], renewed: ['Đã gia hạn', 'badge-info'], overdue: ['Quá hạn', 'badge-danger'], returned: ['Đã trả', 'badge-secondary'], lost: ['Mất sách', 'badge-danger'] };
 
 export default function MyBorrowsPage() {
+  const { user } = useAuth();
   const [borrows, setBorrows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [searchCode, setSearchCode] = useState('');
   const [renewing, setRenewing] = useState(null);
+
+  const isAdmin = ['admin', 'librarian'].includes(user?.role);
+
+  const visibleBorrows = borrows.filter(b => {
+    if (!searchCode.trim()) return true;
+    const search = searchCode.trim().toLowerCase();
+    const copyCode = String(b.copy?.copy_code || b.copy_code || '').toLowerCase();
+    const title = String(b.book?.title || '').toLowerCase();
+    return copyCode.includes(search) || title.includes(search);
+  });
 
   const fetchBorrows = () => {
     setLoading(true);
     const params = filter ? { status: filter } : {};
-    api.get('/borrows/my', { params }).then(r => setBorrows(r.data.data)).finally(() => setLoading(false));
+    const endpoint = isAdmin ? '/borrows' : '/borrows/my';
+    api.get(endpoint, { params })
+      .then(r => setBorrows(r.data.data || []))
+      .catch(() => setBorrows([]))
+      .finally(() => setLoading(false));
   };
 
-  useEffect(() => {fetchBorrows();}, [fetchBorrows]);
+  useEffect(() => { fetchBorrows(); }, [filter, user?.role]);
 
   const handleRenew = async (id) => {
     setRenewing(id);
@@ -42,6 +59,23 @@ export default function MyBorrowsPage() {
         <p style={{ color: '#64748b', marginTop: 4 }}>Quản lý sách bạn đang mượn và lịch sử</p>
       </div>
 
+      <div className="filters-row" style={{ alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <div className="search-input" style={{ flex: 1, position: 'relative' }}>
+          <input
+            className="form-control"
+            style={{ paddingLeft: 12 }}
+            placeholder="Tìm mã ĐKCB hoặc tiêu đề để gia hạn nhanh..."
+            value={searchCode}
+            onChange={e => setSearchCode(e.target.value)}
+          />
+        </div>
+        {searchCode && (
+          <button className="btn btn-secondary" type="button" onClick={() => setSearchCode('')}>
+            Xóa
+          </button>
+        )}
+      </div>
+
       <div className="filters-row">
         {[['', 'Tất cả'], ['borrowed', 'Đang mượn'], ['overdue', 'Quá hạn'], ['returned', 'Đã trả'], ['renewed', 'Đã gia hạn']].map(([v, l]) => (
           <button key={v} className={`btn ${filter === v ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(v)}>{l}</button>
@@ -51,22 +85,29 @@ export default function MyBorrowsPage() {
       <div className="card">
         {loading ? (
           <div style={{ padding: 48, textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }}></div></div>
-        ) : borrows.length === 0 ? (
+        ) : visibleBorrows.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📖</div>
-            <h3>Chưa có lịch sử mượn</h3>
-            <p>Hãy đến thư viện để mượn sách!</p>
+            <h3>Không tìm thấy kết quả</h3>
+            <p>Không có bản ghi phù hợp với mã hoặc tiêu đề bạn vừa nhập.</p>
           </div>
         ) : (
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>Sách</th><th>Ngày mượn</th><th>Hạn trả</th><th>Ngày trả</th><th>Trạng thái</th><th>Gia hạn</th><th></th></tr></thead>
+              <thead><tr><th>Sách</th><th>Mã ĐKCB</th><th>Ngày mượn</th><th>Hạn trả</th><th>Ngày trả</th><th>Trạng thái</th><th>Gia hạn</th><th></th></tr></thead>
               <tbody>
-                {borrows.map(b => {
-                  const days = daysLeft(b.dueDate);
-                  const canRenew = ['borrowed', 'renewed'].includes(b.status) && b.renewCount < b.maxRenewals && days >= 0;
+                {visibleBorrows.map(b => {
+                  const bookId = b.id || b._id;
+                  const copyCode = b.copy?.copy_code || b.copy_code || '—';
+                  const borrowDate = new Date(b.borrow_date || b.borrowDate);
+                  const dueDate = new Date(b.due_date || b.dueDate);
+                  const returnDate = b.return_date || b.returnDate;
+                  const renewCount = b.renew_count ?? b.renewCount;
+                  const maxRenewals = b.max_renewals ?? b.maxRenewals;
+                  const days = daysLeft(b.due_date || b.dueDate);
+                  const canRenew = ['borrowed', 'renewed'].includes(b.status) && renewCount < maxRenewals && days >= 0;
                   return (
-                    <tr key={b._id}>
+                    <tr key={bookId}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{ width: 36, height: 36, borderRadius: 6, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -75,25 +116,31 @@ export default function MyBorrowsPage() {
                           <div>
                             <div style={{ fontWeight: 500, fontSize: 14 }}>{b.book?.title}</div>
                             <div style={{ fontSize: 12, color: '#64748b' }}>{b.book?.author}</div>
+                            {isAdmin && b.user?.name && (
+                              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
+                                Người mượn: {b.user.name} {b.user.student_id ? `(${b.user.student_id})` : ''}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td style={{ fontSize: 13 }}>{new Date(b.borrowDate).toLocaleDateString('vi-VN')}</td>
+                      <td style={{ fontSize: 13 }}>{copyCode}</td>
+                      <td style={{ fontSize: 13 }}>{borrowDate.toLocaleDateString('vi-VN')}</td>
                       <td style={{ fontSize: 13 }}>
-                        <div>{new Date(b.dueDate).toLocaleDateString('vi-VN')}</div>
+                        <div>{dueDate.toLocaleDateString('vi-VN')}</div>
                         {b.status !== 'returned' && (
                           <div style={{ fontSize: 11, color: days < 0 ? '#dc2626' : days <= 3 ? '#d97706' : '#64748b' }}>
                             <FiClock size={10} /> {days < 0 ? `Trễ ${Math.abs(days)} ngày` : `Còn ${days} ngày`}
                           </div>
                         )}
                       </td>
-                      <td style={{ fontSize: 13 }}>{b.returnDate ? new Date(b.returnDate).toLocaleDateString('vi-VN') : '—'}</td>
+                      <td style={{ fontSize: 13 }}>{returnDate ? new Date(returnDate).toLocaleDateString('vi-VN') : '—'}</td>
                       <td><span className={`badge ${statusMap[b.status]?.[1] || 'badge-secondary'}`}>{statusMap[b.status]?.[0]}</span></td>
-                      <td style={{ fontSize: 13, color: '#64748b' }}>{b.renewCount}/{b.maxRenewals}</td>
+                      <td style={{ fontSize: 13, color: '#64748b' }}>{renewCount}/{maxRenewals}</td>
                       <td>
                         {canRenew && (
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleRenew(b._id)} disabled={renewing === b._id}>
-                            <FiRefreshCw size={12} /> {renewing === b._id ? '...' : 'Gia hạn'}
+                          <button className="btn btn-secondary btn-sm" onClick={() => handleRenew(b.id || b._id)} disabled={renewing === (b.id || b._id)}>
+                            <FiRefreshCw size={12} /> {renewing === (b.id || b._id) ? '...' : 'Gia hạn'}
                           </button>
                         )}
                         {b.fine && !b.fine.isPaid && (
