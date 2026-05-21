@@ -4,9 +4,4 @@ uploads/
 client/build/
 *.log
 .DS_Store
-library-pg.rar
-client/src/pages/admin/AdminUsers.js
-library-pg.rar
-server/controllers/otherControllers.js
-server/utils/excelExport.js
 *.rar
