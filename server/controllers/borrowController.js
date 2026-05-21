@@ -186,26 +186,113 @@ exports.renewBorrow = async (req, res) => {
   }
 };
 
+exports.returnByCopyCode = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const code = (req.params.code || '').toUpperCase().trim();
+    if (!code) { await t.rollback(); return res.status(400).json({ success: false, message: 'Thiếu mã ĐKCB' }); }
+
+    const copy = await BookCopy.findOne({ where: { copy_code: code }, transaction: t });
+    if (!copy) { await t.rollback(); return res.status(404).json({ success: false, message: `Không tìm thấy mã ĐKCB: ${code}` }); }
+
+    const borrow = await Borrow.findOne({
+      where: { copy_id: copy.id, status: { [Op.in]: ['borrowed', 'renewed', 'overdue'] } },
+      include: [
+        { model: Book, as: 'book' },
+        { model: User, as: 'user', attributes: ['id','name','email','student_id'] },
+        { model: BookCopy, as: 'copy', attributes: ['id','copy_code'] },
+      ],
+      transaction: t,
+    });
+    if (!borrow) { await t.rollback(); return res.status(404).json({ success: false, message: `Mã ${code} không có phiếu mượn đang hoạt động` }); }
+
+    const now = new Date();
+    let fine = null;
+
+    if (now > borrow.due_date) {
+      const overdue_days = Math.ceil((now - new Date(borrow.due_date)) / (1000 * 60 * 60 * 24));
+      const amount = overdue_days * FINE_PER_DAY;
+      fine = await Fine.create(
+        { user_id: borrow.user_id, borrow_id: borrow.id, amount, reason: 'overdue', overdue_days },
+        { transaction: t }
+      );
+      await User.increment(
+        { total_fines: amount, unpaid_fines: amount },
+        { where: { id: borrow.user_id }, transaction: t }
+      );
+    }
+
+    await borrow.update(
+      { status: 'returned', return_date: now, processed_by: req.user.id },
+      { transaction: t }
+    );
+    await borrow.book.increment('available_copies', { by: 1, transaction: t });
+    await copy.update({ status: 'available' }, { transaction: t });
+
+    if (!fine && borrow.book.deposit > 0) {
+      const depositFine = await Fine.findOne({
+        where: { borrow_id: borrow.id, reason: 'deposit' },
+        transaction: t,
+      });
+      if (depositFine) {
+        await depositFine.update({ is_paid: false, paid_date: null, note: 'Hoàn tiền thế chân' }, { transaction: t });
+        await User.decrement('total_fines', { by: borrow.book.deposit, where: { id: borrow.user_id }, transaction: t });
+      }
+    }
+
+    await t.commit();
+
+    const populated = await Borrow.findByPk(borrow.id, {
+      include: [
+        { model: Book, as: 'book', attributes: ['id','title','author','deposit'] },
+        { model: User, as: 'user', attributes: ['id','name','email','student_id'] },
+        { model: BookCopy, as: 'copy', attributes: ['id','copy_code'] },
+      ],
+    });
+    res.json({ success: true, data: populated, fine });
+  } catch (err) {
+    await t.rollback();
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.getBorrows = async (req, res) => {
   try {
-    const { status, user_id, page = 1, limit = 20 } = req.query;
+    const { status, user_id, search, page = 1, limit = 20 } = req.query;
     const where = {};
     if (status)  where.status  = status;
     if (user_id) where.user_id = user_id;
     if (req.user.role === 'user') where.user_id = req.user.id;
 
+    const include = [
+      { model: Book, as: 'book', attributes: ['id','title','author','cover','deposit'] },
+      { model: BookCopy, as: 'copy', attributes: ['id','copy_code','condition','status'] },
+      { model: User, as: 'user', attributes: ['id','name','email','student_id'] },
+      { model: User, as: 'processor', attributes: ['id','name'] },
+    ];
+
+    if (search) {
+      const like = `%${search}%`;
+      where[Op.or] = [
+        { '$book.title$':      { [Op.iLike]: like } },
+        { '$book.author$':     { [Op.iLike]: like } },
+        { '$copy.copy_code$':  { [Op.iLike]: like } },
+        { '$user.name$':       { [Op.iLike]: like } },
+        { '$user.email$':      { [Op.iLike]: like } },
+        { '$user.student_id$': { [Op.iLike]: like } },
+      ];
+    }
+
     const { count, rows } = await Borrow.findAndCountAll({
       where,
-      include: [
-        { model: Book, as: 'book', attributes: ['id','title','author','cover','deposit'] },
-        { model: User, as: 'user', attributes: ['id','name','email','student_id'] },
-        { model: User, as: 'processor', attributes: ['id','name'] },
-      ],
+      include,
+      distinct: true,
       order: [['created_at', 'DESC']],
       limit: parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
     });
-    res.json({ success: true, data: rows, total: count, page: parseInt(page), pages: Math.ceil(count / limit) });
+    const data = rows.map(item => ({ ...item.toJSON(), copy_code: item.copy?.copy_code || null }));
+    res.json({ success: true, data, total: count, page: parseInt(page), pages: Math.ceil(count / limit) });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -226,7 +313,8 @@ exports.getMyBorrows = async (req, res) => {
       ],
       order: [['created_at', 'DESC']],
     });
-    res.json({ success: true, data: borrows });
+    const data = borrows.map(item => ({ ...item.toJSON(), copy_code: item.copy?.copy_code || null }));
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

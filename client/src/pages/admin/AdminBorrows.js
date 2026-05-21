@@ -57,7 +57,7 @@ export default function AdminBorrows() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <div>
           <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: 13, color: '#64748b' }}>
-            Tìm kiếm (tên/email/mã SV)
+            Tìm kiếm (tên/email/mã SV/mã ĐKCB/tên sách)
           </label>
           <div style={{ position: 'relative' }}>
             <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -301,10 +301,12 @@ export default function AdminBorrows() {
     codeDebounce.current = setTimeout(async () => {
       setCodeLoading(true);
       try {
-        const res = await api.get(`/copies/find/${val.trim()}`);
-        setFoundCopy(res.data.data);
+        const find = await import('../../services/searchHelper');
+        const res = await find.default(val.trim(), { bookLimit: 6 });
+        if (res.type === 'copy') setFoundCopy(res.data);
+        else setBooks(res.data || []);
       } catch (err) {
-        if (err.response?.status === 404) setFoundCopy(null);
+        setFoundCopy(null);
       } finally { setCodeLoading(false); }
     }, 400);
   };

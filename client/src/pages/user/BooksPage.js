@@ -49,12 +49,12 @@ export default function BooksPage() {
         <div className="filters-row">
           <div className="search-input" style={{ flex: 2, position: 'relative' }}>
             <FiSearch className="search-icon" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input className="form-control" style={{ paddingLeft: 36 }} placeholder="Tìm theo tên sách, tác giả, ISBN..."
+            <input className="form-control" style={{ paddingLeft: 36 }} placeholder="Tìm theo tên sách, tác giả, nhà xuất bản, mã ĐKCB..."
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="form-control" style={{ width: 200 }} value={category} onChange={e => { setCategory(e.target.value); setPage(1); }}>
             <option value="">Tất cả thể loại</option>
-            {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+            {categories.map(c => <option key={c.id || c._id} value={c.id || c._id}>{c.name}</option>)}
           </select>
           <select className="form-control" style={{ width: 160 }} value={available} onChange={e => { setAvailable(e.target.value); setPage(1); }}>
             <option value="">Tất cả sách</option>
@@ -75,26 +75,29 @@ export default function BooksPage() {
       ) : (
         <>
           <div className="books-grid">
-            {books.map((book, i) => (
-              <div key={book._id} className="book-card" onClick={() => navigate(`/books/${book.id}`)} style={{ cursor: 'pointer' }}>
-                <div className="book-cover" style={{ background: `linear-gradient(135deg, ${BOOK_COLORS[i % BOOK_COLORS.length]})` }}>
-                  {book.cover ? <img src={book.cover} alt={book.title} /> : <FiBook size={44} />}
-                </div>
-                <div className="book-info">
-                  <div className="book-title">{book.title}</div>
-                  <div className="book-author">{book.author}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, background: '#eff6ff', color: '#2563eb', padding: '2px 8px', borderRadius: 12 }}>
-                      {book.category?.name}
-                    </span>
-                    <span className={`book-available ${book.availableCopies > 0 ? 'badge-success' : 'badge-danger'}`}
-                      style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12 }}>
-                      {book.availableCopies > 0 ? `Còn ${book.availableCopies}` : 'Hết sách'}
-                    </span>
+            {books.map((book, i) => {
+              const bookId = book.id || book._id;
+              return (
+                <div key={bookId} className="book-card" onClick={() => navigate(`/books/${bookId}`)} style={{ cursor: 'pointer' }}>
+                  <div className="book-cover" style={{ background: `linear-gradient(135deg, ${BOOK_COLORS[i % BOOK_COLORS.length]})` }}>
+                    {book.cover ? <img src={book.cover} alt={book.title} /> : <FiBook size={44} />}
+                  </div>
+                  <div className="book-info">
+                    <div className="book-title">{book.title}</div>
+                    <div className="book-author">{book.author}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 11, background: '#eff6ff', color: '#2563eb', padding: '2px 8px', borderRadius: 12 }}>
+                        {book.category?.name}
+                      </span>
+                      <span className={`book-available ${book.availableCopies > 0 ? 'badge-success' : 'badge-danger'}`}
+                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12 }}>
+                        {book.availableCopies > 0 ? `Còn ${book.availableCopies}` : 'Hết sách'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {totalPages > 1 && (
