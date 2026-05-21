@@ -1,0 +1,102 @@
+{
+  "common": {
+    "language": "Language",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "search": "Search",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "department": "Department",
+    "loginTitle": "Library Portal - Login",
+    "registerTitle": "Create Student Account",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "invalidEmail": "Please enter a valid email",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "navigation": {
+    "home": "Home",
+    "books": "Books",
+    "myBorrows": "My Borrows",
+    "myReservations": "My Reservations",
+    "myFines": "My Fines",
+    "profile": "Profile",
+    "contact": "Contact"
+  },
+  "books": {
+    "title": "Title",
+    "author": "Author",
+    "isbn": "ISBN",
+    "category": "Category",
+    "publisher": "Publisher",
+    "publishYear": "Published Year",
+    "description": "Description",
+    "totalCopies": "Total Copies",
+    "availableCopies": "Available Copies",
+    "borrowedCopies": "Borrowed Copies",
+    "borrow": "Borrow",
+    "reserve": "Reserve",
+    "viewDetails": "View Details",
+    "noBooks": "No books found",
+    "bookNotFound": "Book not found",
+    "borrowSuccess": "Book borrowed successfully",
+    "borrowFailed": "Failed to borrow book"
+  },
+  "borrows": {
+    "borrowDate": "Borrow Date",
+    "dueDate": "Due Date",
+    "returnDate": "Return Date",
+    "status": "Status",
+    "active": "Active",
+    "overdue": "Overdue",
+    "returned": "Returned",
+    "myBorrows": "My Borrows"
+  },
+  "fines": {
+    "amount": "Amount",
+    "reason": "Reason",
+    "status": "Status",
+    "paid": "Paid",
+    "pending": "Pending",
+    "createdDate": "Created Date",
+    "dueDate": "Due Date",
+    "paymentDate": "Payment Date",
+    "noFines": "No fines",
+    "totalFines": "Total Fines"
+  },
+  "reservations": {
+    "reservationDate": "Reservation Date",
+    "position": "Position",
+    "status": "Status",
+    "pending": "Pending",
+    "ready": "Ready for Pickup",
+    "cancelled": "Cancelled",
+    "cancelReservation": "Cancel Reservation"
+  },
+  "profile": {
+    "personalInfo": "Personal Information",
+    "accountSettings": "Account Settings",
+    "borrowHistory": "Borrow History",
+    "changePassword": "Change Password"
+  }
+}

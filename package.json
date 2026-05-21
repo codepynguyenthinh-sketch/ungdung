@@ -1,0 +1,19 @@
+{
+  "name": "library-management-postgresql",
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install && cd ../student-client && npm install",
+    "dev": "concurrently \"npm run server\" \"npm run client\" \"npm run student-client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "student-client": "cd student-client && npm start",
+    "seed": "cd server && node seed.js",
+    "start": "cd server && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "pdfkit": "^0.18.0"
+  }
+}

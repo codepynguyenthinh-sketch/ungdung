@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+  <link rel="alternate icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#2563eb" />
+  <title>Phần mềm mượn trả sách - Tra cứu sách</title>
+</head>
+<body>
+  <noscript>Vui lòng bật JavaScript.</noscript>
+  <div id="root"></div>
+  
+  <!-- Google Translate Script -->
+  <style>
+    /* Hide all Google Translate UI elements */
+    .goog-te-banner-frame { display: none !important; visibility: hidden !important; height: 0 !important; }
+    .goog-te-gadget { display: none !important; visibility: hidden !important; }
+    .goog-te-gadget-simple { display: none !important; visibility: hidden !important; }
+    #google_translate_element { display: none !important; visibility: hidden !important; }
+    .goog-te-combo { display: none !important; visibility: hidden !important; }
+    .goog-te-balloon-frame { display: none !important; visibility: hidden !important; }
+    .goog-te-menu-frame { display: none !important; visibility: hidden !important; }
+    body { top: 0 !important; }
+    
+    /* Hide Google Translate floating elements */
+    .goog-te-spinner-pos { display: none !important; }
+    .skiptranslate { display: none !important; }
+    
+    /* Target iframes that might contain Google Translate */
+    iframe[src*="google.com/translate"] { display: none !important; }
+    
+    /* Adjust body if Google Translate added margin-top */
+    body { margin-top: 0 !important; padding-top: 0 !important; }
+  </style>
+  <script type="text/javascript">
+    // Hide Google Translate UI on load and mutations
+    function hideGoogleTranslateUI() {
+      const elements = document.querySelectorAll('.goog-te-banner-frame, .goog-te-gadget, .goog-te-menu-frame, .skiptranslate');
+      elements.forEach(el => el.style.display = 'none');
+      
+      // Also hide parent containers
+      const body = document.body;
+      if (body.style.marginTop) body.style.marginTop = '0';
+      if (body.style.paddingTop) body.style.paddingTop = '0';
+    }
+    
+    function googleTranslateElementInit() {
+      try {
+        new google.translate.TranslateElement({pageLanguage: 'vi', includedLanguages: 'en,vi'}, 'google_translate_element');
+        hideGoogleTranslateUI();
+      } catch(e) {
+        console.log('Google Translate init deferred');
+      }
+    }
+    
+    // Watch for mutations and hide UI
+    const observer = new MutationObserver(hideGoogleTranslateUI);
+    document.addEventListener('DOMContentLoaded', () => {
+      hideGoogleTranslateUI();
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+    window.addEventListener('load', hideGoogleTranslateUI);
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <div id="google_translate_element"></div>
+</body>
+</html>

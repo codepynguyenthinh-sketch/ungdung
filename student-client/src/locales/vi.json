@@ -1,0 +1,102 @@
+{
+  "common": {
+    "language": "Ngôn ngữ",
+    "settings": "Cài đặt",
+    "logout": "Đăng xuất",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "search": "Tìm kiếm",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "yes": "Có",
+    "no": "Không"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
+    "department": "Phòng ban",
+    "loginTitle": "Cổng thư viện - Đăng nhập",
+    "registerTitle": "Tạo tài khoản sinh viên",
+    "forgotPassword": "Quên mật khẩu?",
+    "rememberMe": "Ghi nhớ tôi",
+    "dontHaveAccount": "Bạn chưa có tài khoản?",
+    "alreadyHaveAccount": "Bạn đã có tài khoản?",
+    "loginButton": "Đăng nhập",
+    "registerButton": "Tạo tài khoản",
+    "invalidEmail": "Vui lòng nhập email hợp lệ",
+    "passwordMismatch": "Mật khẩu không khớp"
+  },
+  "navigation": {
+    "home": "Trang chủ",
+    "books": "Sách",
+    "myBorrows": "Sách của tôi",
+    "myReservations": "Sách đã đặt trước",
+    "myFines": "Tiền phạt của tôi",
+    "profile": "Hồ sơ",
+    "contact": "Liên hệ"
+  },
+  "books": {
+    "title": "Tên sách",
+    "author": "Tác giả",
+    "isbn": "ISBN",
+    "category": "Danh mục",
+    "publisher": "Nhà xuất bản",
+    "publishYear": "Năm xuất bản",
+    "description": "Mô tả",
+    "totalCopies": "Tổng số bản",
+    "availableCopies": "Bản có sẵn",
+    "borrowedCopies": "Bản đã mượn",
+    "borrow": "Mượn",
+    "reserve": "Đặt trước",
+    "viewDetails": "Xem chi tiết",
+    "noBooks": "Không tìm thấy sách",
+    "bookNotFound": "Sách không tồn tại",
+    "borrowSuccess": "Mượn sách thành công",
+    "borrowFailed": "Mượn sách thất bại"
+  },
+  "borrows": {
+    "borrowDate": "Ngày mượn",
+    "dueDate": "Ngày hạn trả",
+    "returnDate": "Ngày trả",
+    "status": "Trạng thái",
+    "active": "Đang mượn",
+    "overdue": "Quá hạn",
+    "returned": "Đã trả",
+    "myBorrows": "Sách của tôi"
+  },
+  "fines": {
+    "amount": "Số tiền",
+    "reason": "Lý do",
+    "status": "Trạng thái",
+    "paid": "Đã thanh toán",
+    "pending": "Chờ thanh toán",
+    "createdDate": "Ngày tạo",
+    "dueDate": "Ngày hạn",
+    "paymentDate": "Ngày thanh toán",
+    "noFines": "Không có tiền phạt",
+    "totalFines": "Tổng tiền phạt"
+  },
+  "reservations": {
+    "reservationDate": "Ngày đặt trước",
+    "position": "Vị trí",
+    "status": "Trạng thái",
+    "pending": "Chờ xử lý",
+    "ready": "Sẵn sàng lấy",
+    "cancelled": "Đã hủy",
+    "cancelReservation": "Hủy đặt trước"
+  },
+  "profile": {
+    "personalInfo": "Thông tin cá nhân",
+    "accountSettings": "Cài đặt tài khoản",
+    "borrowHistory": "Lịch sử mượn",
+    "changePassword": "Đổi mật khẩu"
+  }
+}
