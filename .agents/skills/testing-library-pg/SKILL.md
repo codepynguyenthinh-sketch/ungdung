@@ -23,7 +23,7 @@ npm run seed
 # Start backend (port 5001)
 npm run server
 
-# Start admin-client (port 3001) — may have pre-existing runtime errors
+# Start admin-client (port 3001)
 PORT=3001 npm run client
 
 # Start student-client (port 3002)
