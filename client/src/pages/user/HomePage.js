@@ -8,9 +8,13 @@ import api from '../../services/api';
 export default function HomePage() {
   const { user } = useAuth();
   const [borrows, setBorrows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/borrows/my').then(res => setBorrows(res.data.data)).finally(() => setLoading(false));
+    api.get('/borrows/my')
+      .then(res => setBorrows(res.data.data || []))
+      .catch(() => setBorrows([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const active = borrows.filter(b => ['borrowed', 'renewed', 'overdue'].includes(b.status));
@@ -104,16 +108,16 @@ export default function HomePage() {
               <thead><tr><th>Tên sách</th><th>Ngày mượn</th><th>Hạn trả</th><th>Trạng thái</th></tr></thead>
               <tbody>
                 {active.slice(0, 5).map(b => {
-                  const days = daysUntilDue(b.dueDate);
+                  const days = daysUntilDue(b.due_date);
                   return (
-                    <tr key={b._id}>
+                    <tr key={b.id}>
                       <td>
                         <div style={{ fontWeight: 500, fontSize: 14 }}>{b.book?.title}</div>
                         <div style={{ fontSize: 12, color: '#64748b' }}>{b.book?.author}</div>
                       </td>
-                      <td style={{ fontSize: 13 }}>{new Date(b.borrowDate).toLocaleDateString('vi-VN')}</td>
+                      <td style={{ fontSize: 13 }}>{new Date(b.borrow_date).toLocaleDateString('vi-VN')}</td>
                       <td style={{ fontSize: 13 }}>
-                        <div>{new Date(b.dueDate).toLocaleDateString('vi-VN')}</div>
+                        <div>{new Date(b.due_date).toLocaleDateString('vi-VN')}</div>
                         {days >= 0 && <div style={{ fontSize: 11, color: days <= 3 ? '#dc2626' : '#64748b' }}>
                           <FiClock size={10} style={{ marginRight: 3 }} />{days} ngày nữa
                         </div>}
