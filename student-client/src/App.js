@@ -52,11 +52,16 @@ function AppContent() {
 }
 
 export default function App() {
+  // Tự động detect basename từ PUBLIC_URL (set trong .env.production)
+  // - Development: PUBLIC_URL rỗng → basename = "/"
+  // - Production (deploy chung): PUBLIC_URL="/student" → basename = "/student"
+  const basename = process.env.PUBLIC_URL || '/';
+
   return (
     <AuthProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AppContent />
         </BrowserRouter>
       </ThemeProvider>

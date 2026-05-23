@@ -72,6 +72,33 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
 });
 
+// ─── Production: Serve React client builds ──────────────────────────────────────
+// Trong production, Express phục vụ file tĩnh từ client/build và student-client/build
+// Điều này cho phép cùng 1 source chạy được cả localhost (dev) lẫn production (host)
+// - Development: React dev server proxy /api → Express (qua "proxy" trong package.json)
+// - Production: Express serve cả API lẫn file tĩnh React → /api vẫn hoạt động bình thường
+if (process.env.NODE_ENV === 'production') {
+  const clientBuild = path.join(__dirname, '../client/build');
+  const studentBuild = path.join(__dirname, '../student-client/build');
+  const fs = require('fs');
+
+  // Serve student-client tại /student (nếu build tồn tại)
+  if (fs.existsSync(studentBuild)) {
+    app.use('/student', express.static(studentBuild));
+    app.get('/student/*', (req, res) => {
+      res.sendFile(path.join(studentBuild, 'index.html'));
+    });
+  }
+
+  // Serve admin client tại root / (nếu build tồn tại)
+  if (fs.existsSync(clientBuild)) {
+    app.use(express.static(clientBuild));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(clientBuild, 'index.html'));
+    });
+  }
+}
+
 scheduleOverdueCheck();
 
 const PORT = process.env.PORT || 5000;
