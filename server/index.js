@@ -16,9 +16,13 @@ const {
 connectDB();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 const defaultClientOrigins = ['http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3001', 'http://127.0.0.1:3002'];
+// Thêm origin của chính server vào danh sách cho phép (production same-origin)
+const serverOrigins = [`http://localhost:${PORT}`, `http://127.0.0.1:${PORT}`];
 const clientOrigins = [
   ...defaultClientOrigins,
+  ...serverOrigins,
   ...((process.env.CLIENT_URL || '').split(',').map(o => o.trim()).filter(Boolean)),
 ].map(o => o.replace(/\/$/, ''));
 const lanSubnets = (process.env.LAN_SUBNETS || '192.168.,10.,172.16.,172.17.,172.18.,172.19.,172.20.,172.21.,172.22.,172.23.,172.24.,172.25.,172.26.,172.27.,172.28.,172.29.,172.30.,172.31.,127.,::1,::ffff:127.').split(',').map(s => s.trim()).filter(Boolean);
@@ -72,9 +76,35 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
 });
 
+// ─── Production: Serve React client builds ──────────────────────────────────────
+// Trong production, Express phục vụ file tĩnh từ client/build và student-client/build
+// Điều này cho phép cùng 1 source chạy được cả localhost (dev) lẫn production (host)
+// - Development: React dev server proxy /api → Express (qua "proxy" trong package.json)
+// - Production: Express serve cả API lẫn file tĩnh React → /api vẫn hoạt động bình thường
+if (process.env.NODE_ENV === 'production') {
+  const clientBuild = path.join(__dirname, '../client/build');
+  const studentBuild = path.join(__dirname, '../student-client/build');
+  const fs = require('fs');
+
+  // Serve student-client tại /student (nếu build tồn tại)
+  if (fs.existsSync(studentBuild)) {
+    app.use('/student', express.static(studentBuild));
+    app.get('/student/*', (req, res) => {
+      res.sendFile(path.join(studentBuild, 'index.html'));
+    });
+  }
+
+  // Serve admin client tại root / (nếu build tồn tại)
+  if (fs.existsSync(clientBuild)) {
+    app.use(express.static(clientBuild));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(clientBuild, 'index.html'));
+    });
+  }
+}
+
 scheduleOverdueCheck();
 
-const PORT = process.env.PORT || 5000;
 console.log('Server env PORT:', process.env.PORT);
 console.log('JWT_SECRET configured:', Boolean(process.env.JWT_SECRET));
 

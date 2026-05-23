@@ -8,12 +8,21 @@
     "client": "cd client && npm start",
     "student-client": "cd student-client && npm start",
     "seed": "cd server && node seed.js",
-    "start": "cd server && npm start"
+    "start": "cd server && npm start",
+    "build": "cd client && npm run build && cd ../student-client && npm run build",
+    "build:client": "cd client && npm run build",
+    "build:student": "cd student-client && npm run build",
+    "production": "npm run build && NODE_ENV=production npm start",
+    "heroku-postbuild": "npm run build",
+    "render-build": "npm run install:all && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
   "dependencies": {
     "pdfkit": "^0.18.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
