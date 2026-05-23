@@ -16,9 +16,13 @@ const {
 connectDB();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 const defaultClientOrigins = ['http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3001', 'http://127.0.0.1:3002'];
+// Thêm origin của chính server vào danh sách cho phép (production same-origin)
+const serverOrigins = [`http://localhost:${PORT}`, `http://127.0.0.1:${PORT}`];
 const clientOrigins = [
   ...defaultClientOrigins,
+  ...serverOrigins,
   ...((process.env.CLIENT_URL || '').split(',').map(o => o.trim()).filter(Boolean)),
 ].map(o => o.replace(/\/$/, ''));
 const lanSubnets = (process.env.LAN_SUBNETS || '192.168.,10.,172.16.,172.17.,172.18.,172.19.,172.20.,172.21.,172.22.,172.23.,172.24.,172.25.,172.26.,172.27.,172.28.,172.29.,172.30.,172.31.,127.,::1,::ffff:127.').split(',').map(s => s.trim()).filter(Boolean);
@@ -101,7 +105,6 @@ if (process.env.NODE_ENV === 'production') {
 
 scheduleOverdueCheck();
 
-const PORT = process.env.PORT || 5000;
 console.log('Server env PORT:', process.env.PORT);
 console.log('JWT_SECRET configured:', Boolean(process.env.JWT_SECRET));
 
