@@ -545,7 +545,7 @@ function getStatsSecure(token) {
 // TRA THIET BI (ADMIN)
 // ============================================================
 
-function returnDeviceSecure(token, rowIndex) {
+function returnDeviceSecure(token, rowIndex, receiverName) {
   const check = verifyAdminToken(token);
   if (!check.valid) return { success: false, authError: true };
 
@@ -555,7 +555,7 @@ function returnDeviceSecure(token, rowIndex) {
     if (!sheet) return { success: false, error: 'Sheet không tồn tại' };
 
     const now = new Date();
-    const resolver = 'Admin PTN';
+    const resolver = receiverName || 'Admin PTN';
     const returnDate = Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd/MM/yyyy');
     const returnHour = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm:ss');
 

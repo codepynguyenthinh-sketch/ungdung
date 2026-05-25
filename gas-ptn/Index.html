@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đăng Ký Mượn Thiết Bị Phòng Thí Nghiệm</title>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -308,9 +309,6 @@
       <button class="nav-btn admin-only" id="btnStats" onclick="requireAdmin('stats')">
         📊 <span class="label">Thống kê</span>
       </button>
-      <button class="nav-btn admin-only" id="btnReturn" onclick="requireAdmin('returndev')">
-        ↩ <span class="label">Trả thiết bị</span>
-      </button>
       <button class="nav-btn admin-only" id="btnDevices" onclick="requireAdmin('devices')">
         🔧 <span class="label">Thiết bị</span>
       </button>
@@ -499,6 +497,9 @@
           <button class="btn-refresh" onclick="loadRegistrations()">↻ Làm mới</button>
           <div class="count-badge" id="countBadge">0 đăng ký</div>
         </div>
+        <div style="margin-bottom:16px;">
+          <input type="text" class="form-input" id="searchInput" placeholder="🔍 Tìm kiếm theo tên GV, thiết bị, phòng, SĐT, mục đích..." oninput="applyFilter()" style="max-width:500px;">
+        </div>
         <div class="table-wrap">
           <table id="regTable">
             <thead>
@@ -583,41 +584,6 @@
             </thead>
             <tbody id="deviceTableBody">
               <tr><td colspan="6" class="empty-state">Nhấn "Làm mới" để tải dữ liệu</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== VIEW: TRA THIET BI (ADMIN) ===== -->
-  <div class="view-panel" id="viewReturn">
-    <div class="form-card">
-      <div class="form-section">
-        <div class="table-controls">
-          <h2 style="font-size:16px; font-weight:700; color:var(--primary);">↩ Trả thiết bị</h2>
-          <select class="filter-select" id="returnFilter" onchange="applyReturnFilter()">
-            <option value="unreturned">Chưa trả</option>
-            <option value="all">Tất cả</option>
-            <option value="returned">Đã trả</option>
-          </select>
-          <button class="btn-refresh" onclick="loadReturnList()">↻ Làm mới</button>
-          <div class="count-badge" id="returnCount">0 mục</div>
-        </div>
-        <p style="font-size:12px;color:var(--gray-500);margin-bottom:16px;">
-          💡 Nhấn nút <strong>"↩ Trả"</strong> để xác nhận thiết bị đã được trả. Hệ thống sẽ tự động ghi ngày giờ trả vào Google Sheets.
-        </p>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>STT</th><th>Trạng thái</th><th>Họ tên GV</th>
-                <th>Thiết bị</th><th>Phòng</th><th>Từ ngày</th>
-                <th>Đến ngày</th><th>SĐT</th><th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="returnTableBody">
-              <tr><td colspan="9" class="empty-state">Nhấn "Làm mới" để tải dữ liệu</td></tr>
             </tbody>
           </table>
         </div>
@@ -806,7 +772,6 @@
       form: { panel: 'viewForm', btn: 'btnForm' },
       list: { panel: 'viewList', btn: 'btnList' },
       stats: { panel: 'viewStats', btn: 'btnStats' },
-      returndev: { panel: 'viewReturn', btn: 'btnReturn' },
       devices: { panel: 'viewDevices', btn: 'btnDevices' },
     };
 
@@ -819,7 +784,6 @@
 
     if (view === 'list') loadRegistrations();
     else if (view === 'stats') loadStats();
-    else if (view === 'returndev') loadReturnList();
     else if (view === 'devices') loadDevices();
   }
 
@@ -1061,11 +1025,24 @@
 
   function applyFilter() {
     var filter = document.getElementById('statusFilter').value;
+    var searchInput = document.getElementById('searchInput');
+    var keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
     var filtered = allData;
-    if (filter === 'scheduled') filtered = allData.filter(function(r) { return r.scheduled; });
-    else if (filter === 'underMonth') filtered = allData.filter(function(r) { return r.underMonth; });
-    else if (filter === 'overMonth') filtered = allData.filter(function(r) { return r.overMonth; });
-    else if (filter === 'returned') filtered = allData.filter(function(r) { return r.returnTime || r.resolver; });
+    if (filter === 'scheduled') filtered = filtered.filter(function(r) { return r.scheduled; });
+    else if (filter === 'underMonth') filtered = filtered.filter(function(r) { return r.underMonth; });
+    else if (filter === 'overMonth') filtered = filtered.filter(function(r) { return r.overMonth; });
+    else if (filter === 'returned') filtered = filtered.filter(function(r) { return r.returnTime || r.resolver; });
+    if (keyword) {
+      filtered = filtered.filter(function(r) {
+        var searchFields = [
+          r.teacherName, r.studentName, r.deviceName, r.room,
+          r.teacherPhone, r.studentPhone, r.purpose, r.email,
+          r.supervisorName, r.className, r.resolver, r.fromDate, r.toDate
+        ].join(' ').toLowerCase();
+        return searchFields.indexOf(keyword) >= 0;
+      });
+    }
+    document.getElementById('countBadge').textContent = filtered.length + ' đăng ký';
     renderTable(filtered);
   }
 
@@ -1086,7 +1063,9 @@
 
       var actionHtml = '';
       if (isReturned) {
-        actionHtml = '<span style="color:var(--success);font-size:12px;font-weight:600">✓ Đã trả</span>';
+        var returnInfo = '✓ ' + (row.resolver || 'Đã trả');
+        if (row.returnTime) returnInfo += '<br><span style="font-size:11px;opacity:0.8">' + row.returnTime + ' ' + (row.returnHour || '') + '</span>';
+        actionHtml = '<span style="color:var(--success);font-size:12px;font-weight:600">' + returnInfo + '</span>';
       } else if (adminToken && row.rowIndex) {
         actionHtml = '<button class="btn-icon btn-return" onclick="returnDeviceAction(' + row.rowIndex + ')" title="Xác nhận trả thiết bị">↩ Trả</button>';
       }
@@ -1104,136 +1083,66 @@
     }).join('');
   }
 
-  // ===== TRA THIET BI =====
+  // ===== TRA THIET BI (SWEETALERT) =====
   function returnDeviceAction(rowIndex) {
-    if (!confirm('Xác nhận trả thiết bị cho dòng này?')) return;
-
-    document.getElementById('loadingOverlay').classList.add('show');
-    google.script.run
-      .withSuccessHandler(function(res) {
-        document.getElementById('loadingOverlay').classList.remove('show');
-        if (!res) {
-          showToast('Lỗi: Không nhận được phản hồi từ server', 'error');
-          return;
+    Swal.fire({
+      title: 'Xác nhận trả thiết bị',
+      html: '<div style="text-align:left;margin-top:12px;">' +
+        '<label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:8px;">Tên người nhận thiết bị <span style="color:#dc2626">*</span></label>' +
+        '<input id="swalReceiver" class="swal2-input" placeholder="VD: Nguyễn Văn A" style="margin:0;width:100%;font-size:14px;">' +
+        '</div>',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '↩ Xác nhận trả',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#6b7280',
+      focusConfirm: false,
+      preConfirm: function() {
+        var name = document.getElementById('swalReceiver').value.trim();
+        if (!name) {
+          Swal.showValidationMessage('Vui lòng nhập tên người nhận thiết bị!');
+          return false;
         }
-        if (res.authError) {
-          adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
-          setAdminUI(false);
-          openLoginModal('list');
-          return;
-        }
-        if (res.success) {
-          showToast('Đã xác nhận trả thiết bị thành công!', 'success');
-          loadRegistrations();
-        } else {
-          showToast('Lỗi: ' + (res.error || 'Không thể trả thiết bị'), 'error');
-        }
-      })
-      .withFailureHandler(function() {
-        document.getElementById('loadingOverlay').classList.remove('show');
-        showToast('Lỗi kết nối. Vui lòng thử lại!', 'error');
-      })
-      .returnDeviceSecure(adminToken, rowIndex);
-  }
-
-  // ===== TAB TRA THIET BI =====
-  var returnData = [];
-
-  function loadReturnList() {
-    var tbody = document.getElementById('returnTableBody');
-    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Đang tải...</td></tr>';
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (!res) {
-          tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Lỗi: Không nhận được dữ liệu từ server</td></tr>';
-          return;
-        }
-        if (res.authError) {
-          adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
-          setAdminUI(false);
-          tbody.innerHTML = '<tr><td colspan="9" class="empty-state">🔒 Phiên hết hạn. Vui lòng đăng nhập lại.</td></tr>';
-          openLoginModal('returndev'); return;
-        }
-        if (res.success) {
-          returnData = res.data || [];
-          applyReturnFilter();
-        } else {
-          tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Lỗi: ' + (res.error || 'Không xác định') + '</td></tr>';
-        }
-      })
-      .withFailureHandler(function() {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Không thể tải dữ liệu</td></tr>';
-      })
-      .getRegistrationsSecure(adminToken, 1, 500);
-  }
-
-  function applyReturnFilter() {
-    var filter = document.getElementById('returnFilter').value;
-    var filtered = returnData;
-    if (filter === 'unreturned') filtered = returnData.filter(function(r) { return !(r.returnTime || r.resolver); });
-    else if (filter === 'returned') filtered = returnData.filter(function(r) { return r.returnTime || r.resolver; });
-    document.getElementById('returnCount').textContent = filtered.length + ' mục';
-    renderReturnTable(filtered);
-  }
-
-  function renderReturnTable(data) {
-    var tbody = document.getElementById('returnTableBody');
-    if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Không có dữ liệu</td></tr>'; return; }
-    tbody.innerHTML = data.map(function(row, i) {
-      var isReturned = row.returnTime || row.resolver;
-      var statusHtml = '';
-      if (isReturned) statusHtml = '<span class="status-chip chip-green">✓ Đã trả</span>';
-      else if (row.overMonth) statusHtml = '<span class="status-chip chip-yellow">⚠ > 1 tháng</span>';
-      else if (row.underMonth) statusHtml = '<span class="status-chip chip-blue">🔵 ≤ 1 tháng</span>';
-      else if (row.scheduled) statusHtml = '<span class="status-chip chip-orange">📅 Hẹn trước</span>';
-      else statusHtml = '<span class="status-chip" style="background:#f3f4f6;color:#6b7280">—</span>';
-
-      var rowBg = isReturned ? 'style="background:#dcfce7"'
-                : row.overMonth ? 'style="background:#fef9c3"'
-                : row.underMonth ? 'style="background:#dbeafe"' : '';
-
-      var actionHtml = '';
-      if (isReturned) {
-        actionHtml = '<span style="color:var(--success);font-size:12px;font-weight:600">✓ ' + (row.returnTime || '') + ' ' + (row.returnHour || '') + '</span>';
-      } else if (row.rowIndex) {
-        actionHtml = '<button class="btn-icon btn-return" onclick="returnFromTab(' + row.rowIndex + ')" style="padding:6px 14px;font-size:13px;">↩ Trả</button>';
+        return name;
       }
+    }).then(function(result) {
+      if (!result.isConfirmed) return;
+      var receiverName = result.value;
 
-      return '<tr ' + rowBg + '>' +
-        '<td style="font-weight:600;color:var(--gray-500)">' + (i+1) + '</td>' +
-        '<td>' + statusHtml + '</td>' +
-        '<td style="font-weight:600">' + row.teacherName + '</td>' +
-        '<td>' + row.deviceName + '</td><td>' + row.room + '</td>' +
-        '<td>' + row.fromDate + '</td><td>' + row.toDate + '</td>' +
-        '<td>' + row.teacherPhone + '</td>' +
-        '<td style="white-space:nowrap">' + actionHtml + '</td>' +
-        '</tr>';
-    }).join('');
-  }
-
-  function returnFromTab(rowIndex) {
-    if (!confirm('Xác nhận trả thiết bị cho dòng này?')) return;
-    document.getElementById('loadingOverlay').classList.add('show');
-    google.script.run
-      .withSuccessHandler(function(res) {
-        document.getElementById('loadingOverlay').classList.remove('show');
-        if (!res) { showToast('Lỗi: Không nhận được phản hồi', 'error'); return; }
-        if (res.authError) {
-          adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
-          setAdminUI(false); openLoginModal('returndev'); return;
-        }
-        if (res.success) {
-          showToast('Đã xác nhận trả thiết bị thành công!', 'success');
-          loadReturnList();
-        } else {
-          showToast('Lỗi: ' + (res.error || 'Không thể trả'), 'error');
-        }
-      })
-      .withFailureHandler(function() {
-        document.getElementById('loadingOverlay').classList.remove('show');
-        showToast('Lỗi kết nối!', 'error');
-      })
-      .returnDeviceSecure(adminToken, rowIndex);
+      document.getElementById('loadingOverlay').classList.add('show');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          document.getElementById('loadingOverlay').classList.remove('show');
+          if (!res) {
+            showToast('Lỗi: Không nhận được phản hồi từ server', 'error');
+            return;
+          }
+          if (res.authError) {
+            adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
+            setAdminUI(false);
+            openLoginModal('list');
+            return;
+          }
+          if (res.success) {
+            Swal.fire({
+              title: 'Thành công!',
+              text: 'Đã xác nhận trả thiết bị. Người nhận: ' + receiverName,
+              icon: 'success',
+              confirmButtonColor: '#059669',
+              timer: 2500
+            });
+            loadRegistrations();
+          } else {
+            showToast('Lỗi: ' + (res.error || 'Không thể trả thiết bị'), 'error');
+          }
+        })
+        .withFailureHandler(function() {
+          document.getElementById('loadingOverlay').classList.remove('show');
+          showToast('Lỗi kết nối. Vui lòng thử lại!', 'error');
+        })
+        .returnDeviceSecure(adminToken, rowIndex, receiverName);
+    });
   }
 
   // ===== THONG KE =====
