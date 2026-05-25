@@ -61,6 +61,22 @@ function safeFormatDate(val, format) {
   }
 }
 
+function safeParseDate(val) {
+  if (!val) return null;
+  try {
+    if (val instanceof Date && !isNaN(val.getTime())) return val;
+    var str = val.toString().trim();
+    var parts = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (parts) {
+      return new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+    }
+    var d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) {
+    return null;
+  }
+}
+
 // ============================================================
 // QUAN LY SHEET THIET BI & PHONG
 // ============================================================
@@ -506,15 +522,23 @@ function adminLogout(token) {
 // ============================================================
 
 function getRegistrationsSecure(token, page, pageSize) {
-  const check = verifyAdminToken(token);
-  if (!check.valid) return { success: false, authError: true, expired: check.expired || false };
-  return getRegistrations(page, pageSize);
+  try {
+    const check = verifyAdminToken(token);
+    if (!check.valid) return { success: false, authError: true, expired: check.expired || false };
+    return getRegistrations(page, pageSize);
+  } catch (e) {
+    return { success: false, error: 'getRegistrationsSecure: ' + e.toString(), data: [], total: 0 };
+  }
 }
 
 function getStatsSecure(token) {
-  const check = verifyAdminToken(token);
-  if (!check.valid) return { success: false, authError: true, expired: check.expired || false };
-  return getStats();
+  try {
+    const check = verifyAdminToken(token);
+    if (!check.valid) return { success: false, authError: true, expired: check.expired || false };
+    return getStats();
+  } catch (e) {
+    return { success: false, error: 'getStatsSecure: ' + e.toString() };
+  }
 }
 
 // ============================================================
@@ -562,25 +586,32 @@ function getRegistrations(page, pageSize) {
     const endRow = Math.max(2, startRow - pageSize + 1);
     const numRows = startRow - endRow + 1;
 
-    const data = sheet.getRange(endRow, 1, numRows, 21).getValues();
-    const formulas = sheet.getRange(endRow, 26, numRows, 3).getValues();
+    const data = sheet.getRange(endRow, 1, numRows, 21).getDisplayValues();
+    var formulas;
+    try {
+      formulas = sheet.getRange(endRow, 26, numRows, 3).getDisplayValues();
+    } catch (fe) {
+      formulas = [];
+      for (var fi = 0; fi < numRows; fi++) formulas.push(['', '', '']);
+    }
 
     const result = data.reverse().map((row, i) => {
-      const fRow = formulas[numRows - 1 - i];
+      var fRow;
+      try { fRow = formulas[numRows - 1 - i] || ['', '', '']; } catch(e) { fRow = ['', '', '']; }
       const actualRow = startRow - i;
       return {
         rowIndex: actualRow,
-        timestamp: safeFormatDate(row[0], 'dd/MM/yyyy HH:mm'),
-        fromDate: safeFormatDate(row[1], 'dd/MM/yyyy'),
-        toDate: safeFormatDate(row[2], 'dd/MM/yyyy'),
+        timestamp: row[0] || '',
+        fromDate: row[1] || '',
+        toDate: row[2] || '',
         resolver: row[3] || '',
         returnTime: row[4] || '',
         returnHour: row[5] || '',
         teacherName: row[6] || '',
         studentName: row[7] || '',
         className: row[8] || '',
-        teacherPhone: row[9] || '',
-        studentPhone: row[10] || '',
+        teacherPhone: (row[9] || '').toString(),
+        studentPhone: (row[10] || '').toString(),
         deviceName: row[11] || '',
         room: row[12] || '',
         deviceStatus: row[13] || '',
@@ -588,9 +619,9 @@ function getRegistrations(page, pageSize) {
         notes: row[15] || '',
         email: row[16] || '',
         supervisorName: row[20] || '',
-        underMonth: fRow[0] === '✓',
-        overMonth: fRow[1] === '✓',
-        scheduled: fRow[2] === '✓',
+        underMonth: (fRow[0] || '').toString().indexOf('✓') >= 0,
+        overMonth: (fRow[1] || '').toString().indexOf('✓') >= 0,
+        scheduled: (fRow[2] || '').toString().indexOf('✓') >= 0,
       };
     });
 
@@ -616,8 +647,8 @@ function getStats() {
     const deviceCount = {}, roomCount = {};
 
     data.forEach(row => {
-      const fromDate = row[1] ? new Date(row[1]) : null;
-      const toDate = row[2] ? new Date(row[2]) : null;
+      const fromDate = safeParseDate(row[1]);
+      const toDate = safeParseDate(row[2]);
       const resolver = row[3], returnTime = row[4];
       const device = row[11] || 'Không rõ';
       const room = row[12] || 'Không rõ';
