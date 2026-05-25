@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Ký Mượn Thiết Bị Phòng Thí Nghiệm</title>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b5cc4;
+      --primary-bg: #eff6ff;
+      --accent: #0ea5e9;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 12px;
+      --shadow: 0 4px 20px rgba(30,58,138,0.1);
+      --shadow-lg: 0 8px 32px rgba(30,58,138,0.15);
+    }
+
+    body {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: linear-gradient(135deg, #e8f0fe 0%, #f0f9ff 50%, #ecfdf5 100%);
+      min-height: 100vh;
+      color: var(--gray-900);
+    }
+
+    /* HEADER */
+    .site-header {
+      background: linear-gradient(135deg, var(--primary) 0%, #1e40af 60%, #1d4ed8 100%);
+      color: white;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .header-logo {
+      width: 52px; height: 52px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .header-text h1 { font-size: 18px; font-weight: 700; line-height: 1.3; }
+    .header-text p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+    .header-nav { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      background: transparent;
+      color: white;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.2); border-color: white; }
+    .nav-btn.admin-only { display: none; }
+    .is-admin .nav-btn.admin-only { display: inline-flex; align-items: center; gap: 5px; }
+
+    /* MAIN */
+    .main-content { max-width: 1200px; margin: 0 auto; padding: 32px 24px 60px; }
+
+    /* TABS */
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+
+    /* STATUS BADGES */
+    .status-badges { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .badge { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; }
+    .badge-blue { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-yellow { background: #fef9c3; color: #713f12; border: 1px solid #fde68a; }
+    .badge-orange { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+    .badge-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* FORM CARD */
+    .form-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .form-section { padding: 28px 32px; border-bottom: 1px solid var(--gray-100); }
+    .form-section:last-child { border-bottom: none; }
+    .section-title {
+      font-size: 15px; font-weight: 700; color: var(--primary);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::before { content: ''; width: 4px; height: 20px; background: var(--primary); border-radius: 2px; }
+    .section-icon { font-size: 18px; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .form-grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .col-span-2 { grid-column: span 2; }
+    .col-span-full { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+    .required::after { content: ' *'; color: var(--danger); }
+
+    .form-input, .form-select, .form-textarea {
+      padding: 10px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      color: var(--gray-900);
+      transition: all 0.2s; background: white; width: 100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(59,92,196,0.1);
+    }
+    .form-input.error, .form-select.error { border-color: var(--danger); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 12px; color: var(--gray-500); }
+
+    /* ROOM AUTO-FILL */
+    .room-autofill {
+      padding: 10px 14px;
+      background: #ecfdf5;
+      border: 1.5px solid #a7f3d0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #065f46;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* DATE RANGE */
+    .date-range { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end; }
+    .date-separator { padding-bottom: 12px; color: var(--gray-500); font-size: 20px; text-align: center; }
+
+    /* SUBMIT BUTTON */
+    .form-actions {
+      padding: 24px 32px; background: var(--gray-50);
+      display: flex; align-items: center; gap: 16px; justify-content: flex-end;
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white; border: none; padding: 14px 40px;
+      border-radius: 10px; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 15px rgba(30,58,138,0.3);
+    }
+    .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(30,58,138,0.4); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-reset {
+      background: white; color: var(--gray-700);
+      border: 1.5px solid var(--gray-200); padding: 14px 24px;
+      border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-reset:hover { background: var(--gray-100); }
+
+    /* SUCCESS STATE */
+    .success-screen { display: none; text-align: center; padding: 60px 32px; }
+    .success-screen.show { display: block; }
+    .success-icon { font-size: 64px; margin-bottom: 20px; }
+    .success-screen h2 { font-size: 24px; color: var(--success); margin-bottom: 8px; }
+    .success-screen p { color: var(--gray-500); margin-bottom: 24px; }
+    .success-info {
+      background: #ecfdf5; border: 1px solid #a7f3d0;
+      border-radius: 10px; padding: 16px 20px;
+      text-align: left; max-width: 480px; margin: 0 auto 24px;
+    }
+    .success-info-row { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
+    .success-info-row span:first-child { color: var(--gray-500); }
+    .success-info-row span:last-child { font-weight: 600; }
+
+    /* LOADING */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,0.85); z-index: 999;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .loading-overlay.show { display: flex; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid var(--gray-200); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ADMIN TABLE */
+    .table-controls { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+    .filter-select {
+      padding: 8px 14px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: 13px; font-family: inherit; cursor: pointer;
+    }
+    .count-badge {
+      background: var(--primary-bg); color: var(--primary);
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-left: auto;
+    }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+    th {
+      background: var(--primary); color: white;
+      padding: 12px 14px; text-align: left; font-weight: 600;
+      white-space: nowrap; position: sticky; top: 0;
+    }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+    .status-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .chip-blue { background: #dbeafe; color: #1e40af; }
+    .chip-yellow { background: #fef9c3; color: #92400e; }
+    .chip-orange { background: #ffedd5; color: #9a3412; }
+    .chip-green { background: #dcfce7; color: #166534; }
+    .empty-state { text-align: center; padding: 48px; color: var(--gray-500); }
+    .btn-refresh {
+      padding: 8px 18px; border: 1.5px solid var(--primary); border-radius: 8px;
+      color: var(--primary); background: white; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn-refresh:hover { background: var(--primary-bg); }
+
+    /* DEVICE MANAGEMENT */
+    .btn-add {
+      padding: 9px 20px; background: var(--success); color: white;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn-add:hover { filter: brightness(1.1); }
+    .btn-icon {
+      padding: 5px 10px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-edit { background: #dbeafe; color: #1e40af; }
+    .btn-edit:hover { background: #bfdbfe; }
+    .btn-delete { background: #fee2e2; color: #dc2626; }
+    .btn-delete:hover { background: #fecaca; }
+    .btn-return { background: #dcfce7; color: #166534; }
+    .btn-return:hover { background: #bbf7d0; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: white; border-radius: 10px; padding: 14px 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; font-weight: 500;
+      transform: translateY(80px); opacity: 0; transition: all 0.3s;
+      z-index: 1000; max-width: 360px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left: 4px solid var(--danger); }
+    .toast.success { border-left: 4px solid var(--success); }
+
+    @media (max-width: 640px) {
+      .main-content { padding: 20px 16px 40px; }
+      .form-section { padding: 20px 20px; }
+      .date-range { grid-template-columns: 1fr; }
+      .date-separator { display: none; }
+      .col-span-2 { grid-column: auto; }
+      .header-nav .nav-btn span.label { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p style="color: var(--gray-700); font-weight: 500;">Đang xử lý...</p>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <div class="header-logo">🔬</div>
+    <div class="header-text">
+      <h1>Đăng ký mượn thiết bị</h1>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn active" id="btnForm" onclick="showView('form')">
+        📝 <span class="label">Đăng ký</span>
+      </button>
+      <button class="nav-btn admin-only" id="btnList" onclick="requireAdmin('list')">
+        📋 <span class="label">Danh sách</span>
+      </button>
+      <button class="nav-btn admin-only" id="btnStats" onclick="requireAdmin('stats')">
+        📊 <span class="label">Thống kê</span>
+      </button>
+      <button class="nav-btn admin-only" id="btnDevices" onclick="requireAdmin('devices')">
+        🔧 <span class="label">Thiết bị</span>
+      </button>
+      <!-- NUT DANG NHAP (an khi da dang nhap) -->
+      <button class="nav-btn" id="btnLogin" onclick="openLoginModal()" style="background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.6);">
+        🔐 <span class="label">Đăng nhập</span>
+      </button>
+    </nav>
+    <div id="adminBadge" style="display:none;align-items:center;gap:8px;background:rgba(255,255,255,0.15);padding:6px 14px;border-radius:20px;font-size:13px;margin-left:8px;">
+      <span>🛡️ Admin</span>
+      <button onclick="doLogout()" style="background:none;border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:12px;padding:0;font-family:inherit;">Đăng xuất</button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main-content">
+
+  <!-- CHU THICH MAU -->
+  <div class="status-badges">
+    <div class="badge badge-blue"><div class="badge-dot" style="background:#2563eb"></div>Mượn chưa trả &le; 1 tháng</div>
+    <div class="badge badge-yellow"><div class="badge-dot" style="background:#d97706"></div>Mượn chưa trả &gt; 1 tháng</div>
+    <div class="badge badge-orange"><div class="badge-dot" style="background:#f97316"></div>Đặt lịch hẹn trước</div>
+  </div>
+
+  <!-- ===== VIEW: DANG KY ===== -->
+  <div class="view-panel active" id="viewForm">
+    <div class="form-card" id="formCard">
+
+      <!-- SUCCESS SCREEN -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">✅</div>
+        <h2>Đăng ký thành công!</h2>
+        <p>Yêu cầu mượn thiết bị của bạn đã được ghi nhận</p>
+        <div class="success-info" id="successInfo"></div>
+        <button class="btn-submit" onclick="resetForm()" style="margin: 0 auto;">➕ Đăng ký mới</button>
+      </div>
+
+      <!-- FORM -->
+      <form id="registerForm" onsubmit="return false;" style="display:block">
+
+        <!-- THOI GIAN -->
+        <div class="form-section">
+          <h2 class="section-title"><span class="section-icon">📅</span> Thời gian sử dụng</h2>
+          <div class="date-range">
+            <div class="form-group">
+              <label class="form-label required">Từ ngày (sử dụng)</label>
+              <input type="date" class="form-input" id="fromDate" name="fromDate" required>
+            </div>
+            <div class="date-separator">&rarr;</div>
+            <div class="form-group">
+              <label class="form-label required">Đến ngày (sử dụng)</label>
+              <input type="date" class="form-input" id="toDate" name="toDate" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- THONG TIN NGUOI DANG KY -->
+        <div class="form-section">
+          <h2 class="section-title"><span class="section-icon">👤</span> Thông tin người đăng ký</h2>
+
+          <div style="background:var(--gray-50);border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid var(--gray-200);">
+            <p style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">🎓 Giảng viên đăng ký</p>
+            <div class="form-grid form-grid-3">
+              <div class="form-group">
+                <label class="form-label required">Họ và tên giảng viên</label>
+                <input type="text" class="form-input" id="teacherName" placeholder="Nguyễn Văn A" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Họ và tên GVHD</label>
+                <input type="text" class="form-input" id="supervisorName" placeholder="Nếu có">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Số điện thoại (GV)</label>
+                <input type="tel" class="form-input" id="teacherPhone" placeholder="0901234567" required>
+              </div>
+              <div class="form-group" style="grid-column:1/-1;">
+                <label class="form-label required">Địa chỉ email</label>
+                <input type="email" class="form-input" id="email" placeholder="gv@iuh.edu.vn" required style="max-width:380px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- TOGGLE SINH VIEN -->
+          <div style="margin-bottom:4px;">
+            <label style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-size:13px;font-weight:600;color:var(--gray-700);">
+              <span style="position:relative;display:inline-block;width:40px;height:22px;">
+                <input type="checkbox" id="hasStudent" onchange="toggleStudent(this)" style="opacity:0;width:0;height:0;position:absolute;">
+                <span id="toggleTrack" style="position:absolute;inset:0;background:var(--gray-300);border-radius:22px;transition:0.2s;"></span>
+                <span id="toggleThumb" style="position:absolute;left:3px;top:3px;width:16px;height:16px;background:white;border-radius:50%;transition:0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+              </span>
+              Có sinh viên thay thế thực hiện thí nghiệm
+            </label>
+          </div>
+
+          <div id="studentSection" style="display:none;background:#eff6ff;border-radius:10px;padding:16px 20px;margin-top:12px;border:1px solid #bfdbfe;">
+            <p style="font-size:12px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">👨‍🎓 Sinh viên thay thế</p>
+            <div class="form-grid form-grid-3">
+              <div class="form-group">
+                <label class="form-label">Họ và tên sinh viên</label>
+                <input type="text" class="form-input" id="studentName" placeholder="Nguyễn Thị B">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lớp (SV ghi lớp / GV ghi GV)</label>
+                <input type="text" class="form-input" id="className" placeholder="VD: CNTT01 hoặc GV">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số điện thoại (SV)</label>
+                <input type="tel" class="form-input" id="studentPhone" placeholder="0901234567">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- THIET BI -->
+        <div class="form-section">
+          <h2 class="section-title"><span class="section-icon">🔧</span> Thông tin thiết bị</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label required">Tên thiết bị sử dụng</label>
+              <select class="form-select" id="deviceName" required onchange="handleDeviceChange(this)">
+                <option value="">-- Chọn thiết bị --</option>
+                <?!= getDeviceOptionsHtml() ?>
+              </select>
+              <input type="text" class="form-input" id="deviceNameCustom" placeholder="Nhập tên thiết bị..." style="display:none; margin-top:8px;">
+            </div>
+
+            <!-- PHONG: hien dropdown hoac auto-fill tuy thiet bi -->
+            <div class="form-group" id="roomGroup">
+              <label class="form-label required" id="roomLabel">Phòng sử dụng</label>
+              <!-- Dropdown (hien khi chua chon hoac "Thiet bi khac") -->
+              <select class="form-select" id="room" required>
+                <option value="">-- Chọn phòng --</option>
+                <?!= getRoomOptionsHtml() ?>
+              </select>
+              <!-- Auto-fill (hien khi thiet bi co phong gan san) -->
+              <div class="room-autofill" id="roomAutoFill" style="display:none;"></div>
+              <!-- Input an de luon giu gia tri room khi submit -->
+              <input type="hidden" id="roomHidden">
+            </div>
+
+            <div class="form-group col-span-full">
+              <label class="form-label">Tình trạng thiết bị (nhiệt độ, độ ẩm, v.v...)</label>
+              <input type="text" class="form-input" id="deviceStatus" placeholder="VD: Nhiệt độ 25°C, Độ ẩm 65%">
+            </div>
+          </div>
+        </div>
+
+        <!-- MUC DICH & GHI CHU -->
+        <div class="form-section">
+          <h2 class="section-title"><span class="section-icon">📝</span> Mục đích & ghi chú</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label required">Mục đích sử dụng</label>
+              <textarea class="form-textarea" id="purpose" placeholder="Nêu rõ mục đích sử dụng thiết bị..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ghi chú thêm</label>
+              <textarea class="form-textarea" id="notes" placeholder="Các thông tin bổ sung (nếu có)..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-reset" onclick="resetForm()">↺ Nhập lại</button>
+          <button type="button" class="btn-submit" id="submitBtn" onclick="submitRegistration()">✓ Gửi đăng ký</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: DANH SACH ===== -->
+  <div class="view-panel" id="viewList">
+    <div class="form-card">
+      <div class="form-section">
+        <div class="table-controls">
+          <h2 style="font-size:16px; font-weight:700; color:var(--primary);">📋 Danh sách đăng ký</h2>
+          <select class="filter-select" id="statusFilter" onchange="applyFilter()">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="scheduled">Đặt lịch hẹn trước</option>
+            <option value="underMonth">Mượn dưới 1 tháng</option>
+            <option value="overMonth">Mượn trên 1 tháng</option>
+            <option value="returned">Đã trả</option>
+          </select>
+          <button class="btn-refresh" onclick="loadRegistrations()">↻ Làm mới</button>
+          <div class="count-badge" id="countBadge">0 đăng ký</div>
+        </div>
+        <div class="table-wrap">
+          <table id="regTable">
+            <thead>
+              <tr>
+                <th>STT</th><th>Trạng thái</th><th>Họ tên GV</th>
+                <th>Thiết bị</th><th>Phòng</th><th>Từ ngày</th>
+                <th>Đến ngày</th><th>SĐT</th><th>Mục đích</th><th>Đã đăng ký lúc</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="11" class="empty-state">Nhấn "Làm mới" để tải dữ liệu</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: THONG KE ===== -->
+  <div class="view-panel" id="viewStats">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;" id="statsCards">
+      <div style="background:white;border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:32px;margin-bottom:6px">📋</div>
+        <div style="font-size:28px;font-weight:700;color:var(--primary)" id="statTotal">—</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Tổng đăng ký</div>
+      </div>
+      <div style="background:#dcfce7;border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:32px;margin-bottom:6px">✅</div>
+        <div style="font-size:28px;font-weight:700;color:#166534" id="statReturned">—</div>
+        <div style="font-size:13px;color:#166534;margin-top:4px">Đã trả</div>
+      </div>
+      <div style="background:#dbeafe;border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:32px;margin-bottom:6px">🔵</div>
+        <div style="font-size:28px;font-weight:700;color:#1e40af" id="statUnder">—</div>
+        <div style="font-size:13px;color:#1e40af;margin-top:4px">Đang mượn &le; 1 tháng</div>
+      </div>
+      <div style="background:#fef9c3;border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:32px;margin-bottom:6px">⚠️</div>
+        <div style="font-size:28px;font-weight:700;color:#92400e" id="statOver">—</div>
+        <div style="font-size:13px;color:#92400e;margin-top:4px">Quá hạn &gt; 1 tháng</div>
+      </div>
+      <div style="background:#ffedd5;border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:32px;margin-bottom:6px">📅</div>
+        <div style="font-size:28px;font-weight:700;color:#9a3412" id="statScheduled">—</div>
+        <div style="font-size:13px;color:#9a3412;margin-top:4px">Hẹn trước</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="form-card" style="padding:24px;">
+        <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px;">🔧 Top thiết bị được mượn</h3>
+        <div id="topDevices"><p style="color:var(--gray-500);font-size:13px">Đang tải...</p></div>
+      </div>
+      <div class="form-card" style="padding:24px;">
+        <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px;">🏢 Phòng sử dụng nhiều nhất</h3>
+        <div id="topRooms"><p style="color:var(--gray-500);font-size:13px">Đang tải...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: QUAN LY THIET BI (ADMIN) ===== -->
+  <div class="view-panel" id="viewDevices">
+    <div class="form-card">
+      <div class="form-section">
+        <div class="table-controls">
+          <h2 style="font-size:16px; font-weight:700; color:var(--primary);">🔧 Quản lý thiết bị &amp; phòng</h2>
+          <button class="btn-refresh" onclick="loadDevices()">↻ Làm mới</button>
+          <button class="btn-add" onclick="openDeviceModal()">＋ Thêm thiết bị</button>
+          <div class="count-badge" id="deviceCount">0 thiết bị</div>
+        </div>
+        <p style="font-size:12px;color:var(--gray-500);margin-bottom:16px;">
+          💡 Danh sách này được lưu trong sheet <strong>"Thiết bị &amp; Phòng"</strong> trên Google Sheets.
+          Tên thiết bị và phòng sẽ xuất hiện trong form đăng ký. Khi chọn thiết bị, phòng sẽ tự động điền theo cột <strong>Phòng</strong>.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>STT</th><th>Tên thiết bị</th><th>Vị trí thiết bị</th>
+                <th>Phòng</th><th>Ghi chú</th><th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="deviceTableBody">
+              <tr><td colspan="6" class="empty-state">Nhấn "Làm mới" để tải dữ liệu</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL DANG NHAP ADMIN -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,0.3);">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:48px;margin-bottom:12px;">🔐</div>
+      <h2 style="font-size:20px;font-weight:700;color:var(--primary);">Đăng nhập Admin</h2>
+      <p style="font-size:13px;color:var(--gray-500);margin-top:6px;">Chức năng này chỉ dành cho quản trị viên PTN</p>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:6px;">Mật khẩu</label>
+      <input type="password" id="adminPwInput" class="form-input" placeholder="Nhập mật khẩu admin..." onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="loginError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--danger);margin-bottom:16px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeLoginModal()" class="btn-reset" style="flex:1;">Huỷ</button>
+      <button onclick="doLogin()" class="btn-submit" style="flex:2;" id="loginBtn">🔓 Đăng nhập</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL THEM/SUA THIET BI -->
+<div id="deviceModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:16px;padding:32px 36px;width:100%;max-width:480px;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,0.3);">
+    <h2 id="deviceModalTitle" style="font-size:18px;font-weight:700;color:var(--primary);margin-bottom:24px;">➕ Thêm thiết bị mới</h2>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="form-group">
+        <label class="form-label required">Tên thiết bị</label>
+        <input type="text" class="form-input" id="dName" placeholder="VD: Máy đo pH">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vị trí thiết bị</label>
+        <input type="text" class="form-input" id="dLocation" placeholder="VD: Tủ kính phòng 101">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phòng</label>
+        <input type="text" class="form-input" id="dRoom" placeholder="VD: PTN 101">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ghi chú</label>
+        <input type="text" class="form-input" id="dNotes" placeholder="Thông tin thêm (nếu có)">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <button onclick="closeDeviceModal()" class="btn-reset" style="flex:1;">Huỷ</button>
+      <button onclick="saveDevice()" class="btn-submit" style="flex:2;" id="deviceSaveBtn">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var allData = [];
+  var allDevices = [];
+  var deviceRoomMap = {};
+  var adminToken = null;
+  var pendingView = null;
+  var editingDeviceRow = null;
+
+  // Khoi phuc token tu sessionStorage
+  (function() {
+    var saved = sessionStorage.getItem('adminToken');
+    var expiry = sessionStorage.getItem('adminExpiry');
+    if (saved && expiry && new Date().getTime() < parseInt(expiry)) {
+      adminToken = saved;
+      setAdminUI(true);
+    }
+  })();
+
+  // Load map thiet bi -> phong ngay khi trang khoi dong
+  google.script.run
+    .withSuccessHandler(function(map) {
+      deviceRoomMap = map || {};
+    })
+    .getDeviceRoomMap();
+
+  function setAdminUI(isAdmin) {
+    var badge = document.getElementById('adminBadge');
+    var loginBtn = document.getElementById('btnLogin');
+    var header = document.getElementById('siteHeader');
+    badge.style.display = isAdmin ? 'flex' : 'none';
+    loginBtn.style.display = isAdmin ? 'none' : 'inline-flex';
+    if (isAdmin) {
+      header.querySelector('.header-inner').classList.add('is-admin');
+      document.querySelectorAll('.nav-btn.admin-only').forEach(function(b) { b.style.display = 'inline-flex'; });
+    } else {
+      header.querySelector('.header-inner').classList.remove('is-admin');
+      document.querySelectorAll('.nav-btn.admin-only').forEach(function(b) { b.style.display = 'none'; });
+    }
+  }
+
+  // ===== ADMIN AUTH =====
+  function requireAdmin(view) {
+    if (adminToken) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.valid) {
+            showView(view);
+          } else {
+            adminToken = null;
+            sessionStorage.removeItem('adminToken');
+            sessionStorage.removeItem('adminExpiry');
+            setAdminUI(false);
+            openLoginModal(view);
+          }
+        })
+        .verifyAdminToken(adminToken);
+    } else {
+      openLoginModal(view);
+    }
+  }
+
+  function openLoginModal(view) {
+    pendingView = view || null;
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('loginModal').style.display = 'flex';
+    setTimeout(function() { document.getElementById('adminPwInput').focus(); }, 100);
+  }
+
+  function closeLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    pendingView = null;
+  }
+
+  function doLogin() {
+    var pw = document.getElementById('adminPwInput').value;
+    if (!pw) { showLoginError('Vui lòng nhập mật khẩu!'); return; }
+
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'Đang kiểm tra...';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false; btn.textContent = '🔓 Đăng nhập';
+        if (res && res.success) {
+          adminToken = res.token;
+          sessionStorage.setItem('adminToken', res.token);
+          sessionStorage.setItem('adminExpiry', res.expiry.toString());
+          setAdminUI(true);
+          closeLoginModal();
+          if (pendingView) showView(pendingView);
+          showToast('Đăng nhập thành công!', 'success');
+        } else {
+          showLoginError((res && res.error) ? res.error : 'Mật khẩu không đúng!');
+          document.getElementById('adminPwInput').value = '';
+          document.getElementById('adminPwInput').focus();
+        }
+      })
+      .withFailureHandler(function() {
+        btn.disabled = false; btn.textContent = '🔓 Đăng nhập';
+        showLoginError('Lỗi kết nối. Vui lòng thử lại!');
+      })
+      .adminLogin(pw);
+  }
+
+  function showLoginError(msg) {
+    var el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function doLogout() {
+    google.script.run.adminLogout(adminToken);
+    adminToken = null;
+    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminExpiry');
+    setAdminUI(false);
+    showView('form');
+    showToast('Đã đăng xuất khỏi chế độ Admin', 'success');
+  }
+
+  // ===== NAVIGATION =====
+  function showView(view) {
+    document.querySelectorAll('.view-panel').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.nav-btn').forEach(function(el) { el.classList.remove('active'); });
+
+    var viewMap = {
+      form: { panel: 'viewForm', btn: 'btnForm' },
+      list: { panel: 'viewList', btn: 'btnList' },
+      stats: { panel: 'viewStats', btn: 'btnStats' },
+      devices: { panel: 'viewDevices', btn: 'btnDevices' },
+    };
+
+    var target = viewMap[view];
+    if (!target) return;
+
+    document.getElementById(target.panel).classList.add('active');
+    var btn = document.getElementById(target.btn);
+    if (btn) btn.classList.add('active');
+
+    if (view === 'list') loadRegistrations();
+    else if (view === 'stats') loadStats();
+    else if (view === 'devices') loadDevices();
+  }
+
+  // ===== FORM =====
+  function toggleStudent(cb) {
+    var section = document.getElementById('studentSection');
+    var track = document.getElementById('toggleTrack');
+    var thumb = document.getElementById('toggleThumb');
+    if (cb.checked) {
+      section.style.display = 'block';
+      track.style.background = '#3b5cc4';
+      thumb.style.left = '21px';
+    } else {
+      section.style.display = 'none';
+      track.style.background = 'var(--gray-300)';
+      thumb.style.left = '3px';
+      ['studentName','className','studentPhone'].forEach(function(id) { document.getElementById(id).value = ''; });
+    }
+  }
+
+  function handleDeviceChange(sel) {
+    var custom = document.getElementById('deviceNameCustom');
+    var roomSel = document.getElementById('room');
+    var roomAutoFill = document.getElementById('roomAutoFill');
+    var roomHidden = document.getElementById('roomHidden');
+    var roomLabel = document.getElementById('roomLabel');
+
+    if (sel.value === 'Thiết bị khác') {
+      custom.style.display = 'block';
+      custom.required = true;
+      roomSel.style.display = 'block';
+      roomSel.required = true;
+      roomSel.value = '';
+      roomAutoFill.style.display = 'none';
+      roomHidden.value = '';
+      roomLabel.className = 'form-label required';
+
+    } else if (sel.value && deviceRoomMap[sel.value] !== undefined && deviceRoomMap[sel.value] !== '') {
+      custom.style.display = 'none';
+      custom.required = false;
+      custom.value = '';
+      var assignedRoom = deviceRoomMap[sel.value];
+      roomSel.style.display = 'none';
+      roomSel.required = false;
+      roomAutoFill.style.display = 'flex';
+      roomAutoFill.textContent = assignedRoom;
+      roomHidden.value = assignedRoom;
+      roomLabel.className = 'form-label';
+
+    } else {
+      custom.style.display = 'none';
+      custom.required = false;
+      custom.value = '';
+      roomSel.style.display = 'block';
+      roomSel.required = true;
+      roomSel.value = '';
+      roomAutoFill.style.display = 'none';
+      roomHidden.value = '';
+      roomLabel.className = 'form-label required';
+    }
+  }
+
+  function validateForm() {
+    var required = ['fromDate','toDate','teacherName','teacherPhone','email','deviceName','purpose'];
+    var valid = true;
+    required.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el.value.trim()) { el.classList.add('error'); valid = false; }
+      else el.classList.remove('error');
+    });
+
+    var roomSel = document.getElementById('room');
+    var roomHidden = document.getElementById('roomHidden');
+    var roomVisible = roomSel.style.display !== 'none';
+    if (roomVisible && !roomSel.value) {
+      roomSel.classList.add('error');
+      valid = false;
+    } else {
+      roomSel.classList.remove('error');
+    }
+    if (!roomVisible && !roomHidden.value) {
+      valid = false;
+      showToast('Không xác định được phòng. Vui lòng chọn lại thiết bị!', 'error');
+    }
+
+    var from = new Date(document.getElementById('fromDate').value);
+    var to = new Date(document.getElementById('toDate').value);
+    if (from && to && to < from) {
+      document.getElementById('toDate').classList.add('error');
+      showToast('Ngày kết thúc phải sau ngày bắt đầu!', 'error');
+      valid = false;
+    }
+    return valid;
+  }
+
+  function submitRegistration() {
+    if (!validateForm()) { showToast('Vui lòng điền đầy đủ các trường bắt buộc!', 'error'); return; }
+
+    var deviceSel = document.getElementById('deviceName').value;
+    var deviceName = deviceSel === 'Thiết bị khác'
+      ? document.getElementById('deviceNameCustom').value.trim()
+      : deviceSel;
+
+    var roomSel = document.getElementById('room');
+    var roomHidden = document.getElementById('roomHidden');
+    var room = roomHidden.value || roomSel.value;
+
+    var formData = {
+      fromDate: document.getElementById('fromDate').value,
+      toDate: document.getElementById('toDate').value,
+      teacherName: document.getElementById('teacherName').value,
+      supervisorName: document.getElementById('supervisorName').value,
+      teacherPhone: document.getElementById('teacherPhone').value,
+      email: document.getElementById('email').value,
+      studentName: document.getElementById('studentName').value,
+      className: document.getElementById('className').value,
+      studentPhone: document.getElementById('studentPhone').value,
+      deviceName: deviceName,
+      room: room,
+      deviceStatus: document.getElementById('deviceStatus').value,
+      purpose: document.getElementById('purpose').value,
+      notes: document.getElementById('notes').value,
+    };
+
+    document.getElementById('loadingOverlay').classList.add('show');
+    document.getElementById('submitBtn').disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        document.getElementById('loadingOverlay').classList.remove('show');
+        document.getElementById('submitBtn').disabled = false;
+        if (res && res.success) showSuccessScreen(formData, res.rowNumber);
+        else showToast('Lỗi: ' + ((res && res.error) || 'Không xác định'), 'error');
+      })
+      .withFailureHandler(function() {
+        document.getElementById('loadingOverlay').classList.remove('show');
+        document.getElementById('submitBtn').disabled = false;
+        showToast('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+      })
+      .submitForm(formData);
+  }
+
+  function showSuccessScreen(formData, rowNum) {
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('successScreen').classList.add('show');
+    var from = formData.fromDate.split('-').reverse().join('/');
+    var to = formData.toDate.split('-').reverse().join('/');
+    document.getElementById('successInfo').innerHTML =
+      '<div class="success-info-row"><span>Giảng viên</span><span>' + formData.teacherName + '</span></div>' +
+      '<div class="success-info-row"><span>Thiết bị</span><span>' + formData.deviceName + '</span></div>' +
+      '<div class="success-info-row"><span>Phòng</span><span>' + formData.room + '</span></div>' +
+      '<div class="success-info-row"><span>Thời gian</span><span>' + from + ' → ' + to + '</span></div>' +
+      '<div class="success-info-row"><span>Số thứ tự</span><span>#' + rowNum + '</span></div>';
+  }
+
+  function resetForm() {
+    document.getElementById('registerForm').reset();
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('successScreen').classList.remove('show');
+    document.getElementById('deviceNameCustom').style.display = 'none';
+    document.getElementById('deviceNameCustom').required = false;
+    document.getElementById('studentSection').style.display = 'none';
+    document.getElementById('hasStudent').checked = false;
+    document.getElementById('toggleTrack').style.background = 'var(--gray-300)';
+    document.getElementById('toggleThumb').style.left = '3px';
+    document.getElementById('room').style.display = 'block';
+    document.getElementById('room').required = true;
+    document.getElementById('room').value = '';
+    document.getElementById('roomAutoFill').style.display = 'none';
+    document.getElementById('roomHidden').value = '';
+    document.getElementById('roomLabel').className = 'form-label required';
+    document.querySelectorAll('.form-input.error, .form-select.error').forEach(function(el) { el.classList.remove('error'); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ===== RELOAD DROPDOWNS (sau khi admin them/sua/xoa thiet bi) =====
+  function reloadFormDropdowns() {
+    google.script.run
+      .withSuccessHandler(function(map) { deviceRoomMap = map || {}; })
+      .getDeviceRoomMap();
+
+    google.script.run
+      .withSuccessHandler(function(devices) {
+        var sel = document.getElementById('deviceName');
+        var current = sel.value;
+        sel.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+        devices.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d; opt.textContent = d;
+          sel.appendChild(opt);
+        });
+        if (current) sel.value = current;
+      })
+      .getDeviceListPublic();
+
+    google.script.run
+      .withSuccessHandler(function(rooms) {
+        var sel = document.getElementById('room');
+        var current = sel.value;
+        sel.innerHTML = '<option value="">-- Chọn phòng --</option>';
+        rooms.forEach(function(r) {
+          var opt = document.createElement('option');
+          opt.value = r; opt.textContent = r;
+          sel.appendChild(opt);
+        });
+        if (current) sel.value = current;
+      })
+      .getRoomListPublic();
+  }
+
+  // ===== DANH SACH DANG KY =====
+  function loadRegistrations() {
+    var tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Đang tải...</td></tr>';
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res) {
+          tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Lỗi: Không nhận được dữ liệu từ server</td></tr>';
+          return;
+        }
+        if (res.authError) {
+          adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
+          setAdminUI(false);
+          tbody.innerHTML = '<tr><td colspan="11" class="empty-state">🔒 Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.</td></tr>';
+          openLoginModal('list'); return;
+        }
+        if (res.success) {
+          allData = res.data;
+          document.getElementById('countBadge').textContent = res.total + ' đăng ký';
+          applyFilter();
+        } else {
+          tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Lỗi: ' + (res.error || 'Không xác định') + '</td></tr>';
+        }
+      })
+      .withFailureHandler(function() {
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Không thể tải dữ liệu</td></tr>';
+      })
+      .getRegistrationsSecure(adminToken, 1, 200);
+  }
+
+  function applyFilter() {
+    var filter = document.getElementById('statusFilter').value;
+    var filtered = allData;
+    if (filter === 'scheduled') filtered = allData.filter(function(r) { return r.scheduled; });
+    else if (filter === 'underMonth') filtered = allData.filter(function(r) { return r.underMonth; });
+    else if (filter === 'overMonth') filtered = allData.filter(function(r) { return r.overMonth; });
+    else if (filter === 'returned') filtered = allData.filter(function(r) { return r.returnTime || r.resolver; });
+    renderTable(filtered);
+  }
+
+  function renderTable(data) {
+    var tbody = document.getElementById('tableBody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Không có dữ liệu</td></tr>'; return; }
+    tbody.innerHTML = data.map(function(row, i) {
+      var statusHtml = '';
+      var isReturned = row.returnTime || row.resolver;
+      if (isReturned) statusHtml = '<span class="status-chip chip-green">✓ Đã trả</span>';
+      else if (row.scheduled) statusHtml = '<span class="status-chip chip-orange">📅 Hẹn trước</span>';
+      else if (row.overMonth) statusHtml = '<span class="status-chip chip-yellow">⚠ > 1 tháng</span>';
+      else if (row.underMonth) statusHtml = '<span class="status-chip chip-blue">🔵 ≤ 1 tháng</span>';
+      else statusHtml = '<span class="status-chip" style="background:#f3f4f6;color:#6b7280">—</span>';
+      var rowBg = !isReturned && row.overMonth ? 'style="background:#fef9c3"'
+                : !isReturned && row.underMonth ? 'style="background:#dbeafe"'
+                : !isReturned && row.scheduled ? 'style="background:#ffedd5"' : '';
+
+      var actionHtml = '';
+      if (isReturned) {
+        actionHtml = '<span style="color:var(--success);font-size:12px;font-weight:600">✓ Đã trả</span>';
+      } else if (adminToken && row.rowIndex) {
+        actionHtml = '<button class="btn-icon btn-return" onclick="returnDeviceAction(' + row.rowIndex + ')" title="Xác nhận trả thiết bị">↩ Trả</button>';
+      }
+
+      return '<tr ' + rowBg + '>' +
+        '<td style="font-weight:600;color:var(--gray-500)">' + (i+1) + '</td>' +
+        '<td>' + statusHtml + '</td>' +
+        '<td style="font-weight:600">' + row.teacherName + '</td>' +
+        '<td>' + row.deviceName + '</td><td>' + row.room + '</td>' +
+        '<td>' + row.fromDate + '</td><td>' + row.toDate + '</td><td>' + row.teacherPhone + '</td>' +
+        '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + row.purpose + '">' + row.purpose + '</td>' +
+        '<td style="color:var(--gray-500);font-size:12px">' + row.timestamp + '</td>' +
+        '<td style="white-space:nowrap">' + actionHtml + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ===== TRA THIET BI =====
+  function returnDeviceAction(rowIndex) {
+    if (!confirm('Xác nhận trả thiết bị cho dòng này?')) return;
+
+    document.getElementById('loadingOverlay').classList.add('show');
+    google.script.run
+      .withSuccessHandler(function(res) {
+        document.getElementById('loadingOverlay').classList.remove('show');
+        if (!res) {
+          showToast('Lỗi: Không nhận được phản hồi từ server', 'error');
+          return;
+        }
+        if (res.authError) {
+          adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
+          setAdminUI(false);
+          openLoginModal('list');
+          return;
+        }
+        if (res.success) {
+          showToast('Đã xác nhận trả thiết bị thành công!', 'success');
+          loadRegistrations();
+        } else {
+          showToast('Lỗi: ' + (res.error || 'Không thể trả thiết bị'), 'error');
+        }
+      })
+      .withFailureHandler(function() {
+        document.getElementById('loadingOverlay').classList.remove('show');
+        showToast('Lỗi kết nối. Vui lòng thử lại!', 'error');
+      })
+      .returnDeviceSecure(adminToken, rowIndex);
+  }
+
+  // ===== THONG KE =====
+  function loadStats() {
+    document.getElementById('statTotal').textContent = '...';
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res) {
+          showToast('Lỗi: Không nhận được dữ liệu thống kê', 'error');
+          return;
+        }
+        if (res.authError) {
+          adminToken = null; sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminExpiry');
+          setAdminUI(false); openLoginModal('stats'); return;
+        }
+        if (res.success) {
+          var s = res.stats;
+          document.getElementById('statTotal').textContent = s.total || 0;
+          document.getElementById('statReturned').textContent = s.returned || 0;
+          document.getElementById('statUnder').textContent = s.underMonth || 0;
+          document.getElementById('statOver').textContent = s.overMonth || 0;
+          document.getElementById('statScheduled').textContent = s.scheduled || 0;
+          var renderBar = function(items, containerId) {
+            var max = (items[0] && items[0][1]) || 1;
+            document.getElementById(containerId).innerHTML = items.map(function(item) {
+              var name = item[0], count = item[1];
+              return '<div style="margin-bottom:10px;">' +
+                '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">' +
+                  '<span style="color:var(--gray-700);font-weight:500">' + name + '</span>' +
+                  '<span style="color:var(--primary);font-weight:700">' + count + '</span>' +
+                '</div>' +
+                '<div style="height:6px;background:var(--gray-100);border-radius:3px;">' +
+                  '<div style="height:6px;background:var(--primary-light);border-radius:3px;width:' + Math.round(count/max*100) + '%;transition:width 0.5s"></div>' +
+                '</div>' +
+              '</div>';
+            }).join('') || '<p style="color:var(--gray-500);font-size:13px">Chưa có dữ liệu</p>';
+          };
+          renderBar(s.topDevices || [], 'topDevices');
+          renderBar(s.topRooms || [], 'topRooms');
+        }
+      })
+      .getStatsSecure(adminToken);
+  }
+
+  // ===== QUAN LY THIET BI =====
+  function loadDevices() {
+    var tbody = document.getElementById('deviceTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Đang tải...</td></tr>';
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Lỗi: Không nhận được dữ liệu</td></tr>';
+          return;
+        }
+        if (res.authError) {
+          openLoginModal('devices'); return;
+        }
+        if (res.success) {
+          allDevices = res.devices;
+          document.getElementById('deviceCount').textContent = res.devices.length + ' thiết bị';
+          renderDeviceTable(res.devices);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Lỗi: ' + (res.error || 'Không tải được') + '</td></tr>';
+        }
+      })
+      .withFailureHandler(function() {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Không thể tải dữ liệu</td></tr>';
+      })
+      .getDevicesWithLocation(adminToken);
+  }
+
+  function renderDeviceTable(devices) {
+    var tbody = document.getElementById('deviceTableBody');
+    if (!devices.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Chưa có thiết bị nào</td></tr>';
+      return;
+    }
+    tbody.innerHTML = devices.map(function(d, i) {
+      return '<tr>' +
+        '<td style="font-weight:600;color:var(--gray-500)">' + (i+1) + '</td>' +
+        '<td style="font-weight:600">' + d.name + '</td>' +
+        '<td>' + (d.location || '<span style="color:var(--gray-300)">—</span>') + '</td>' +
+        '<td>' + (d.room ? '<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">' + d.room + '</span>' : '<span style="color:var(--gray-300)">—</span>') + '</td>' +
+        '<td style="color:var(--gray-500);font-size:12px">' + (d.notes || '') + '</td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="btn-icon btn-edit" onclick="openDeviceModal(' + d.rowIndex + ')">✏️ Sửa</button>' +
+          '<button class="btn-icon btn-delete" onclick="deleteDeviceRow(' + d.rowIndex + ')" style="margin-left:6px;">🗑️ Xóa</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function openDeviceModal(rowIndex) {
+    editingDeviceRow = rowIndex || null;
+    var modal = document.getElementById('deviceModal');
+    var title = document.getElementById('deviceModalTitle');
+    if (rowIndex) {
+      var d = allDevices.find(function(x) { return x.rowIndex === rowIndex; });
+      title.textContent = '✏️ Sửa thiết bị';
+      document.getElementById('dName').value = d ? d.name : '';
+      document.getElementById('dLocation').value = d ? d.location : '';
+      document.getElementById('dRoom').value = d ? d.room : '';
+      document.getElementById('dNotes').value = d ? d.notes : '';
+    } else {
+      title.textContent = '➕ Thêm thiết bị mới';
+      ['dName','dLocation','dRoom','dNotes'].forEach(function(id) { document.getElementById(id).value = ''; });
+    }
+    modal.style.display = 'flex';
+    setTimeout(function() { document.getElementById('dName').focus(); }, 100);
+  }
+
+  function closeDeviceModal() {
+    document.getElementById('deviceModal').style.display = 'none';
+    editingDeviceRow = null;
+  }
+
+  function saveDevice() {
+    var name = document.getElementById('dName').value.trim();
+    if (!name) { showToast('Vui lòng nhập tên thiết bị!', 'error'); return; }
+
+    var deviceData = {
+      name: name,
+      location: document.getElementById('dLocation').value.trim(),
+      room: document.getElementById('dRoom').value.trim(),
+      notes: document.getElementById('dNotes').value.trim(),
+    };
+
+    var btn = document.getElementById('deviceSaveBtn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+    var handler = function(res) {
+      btn.disabled = false; btn.textContent = '💾 Lưu';
+      if (!res) { showToast('Lỗi: Không nhận được phản hồi', 'error'); return; }
+      if (res.authError) { openLoginModal('devices'); return; }
+      if (res.success) {
+        closeDeviceModal();
+        loadDevices();
+        reloadFormDropdowns();
+        showToast(editingDeviceRow ? 'Đã cập nhật thiết bị!' : 'Đã thêm thiết bị mới!', 'success');
+      } else {
+        showToast('Lỗi: ' + (res.error || 'Không lưu được'), 'error');
+      }
+    };
+
+    if (editingDeviceRow) {
+      google.script.run.withSuccessHandler(handler).withFailureHandler(function() {
+        btn.disabled = false; btn.textContent = '💾 Lưu';
+        showToast('Lỗi kết nối!', 'error');
+      }).updateDevice(adminToken, editingDeviceRow, deviceData);
+    } else {
+      google.script.run.withSuccessHandler(handler).withFailureHandler(function() {
+        btn.disabled = false; btn.textContent = '💾 Lưu';
+        showToast('Lỗi kết nối!', 'error');
+      }).addDevice(adminToken, deviceData);
+    }
+  }
+
+  function deleteDeviceRow(rowIndex) {
+    if (!confirm('Bạn có chắc muốn xóa thiết bị này không?')) return;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res) { showToast('Lỗi: Không nhận được phản hồi', 'error'); return; }
+        if (res.success) {
+          loadDevices();
+          reloadFormDropdowns();
+          showToast('Đã xóa thiết bị!', 'success');
+        } else {
+          showToast('Lỗi: ' + (res.error || 'Không xóa được'), 'error');
+        }
+      })
+      .deleteDevice(adminToken, rowIndex);
+  }
+
+  // ===== TOAST =====
+  function showToast(msg, type) {
+    var toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show ' + (type || '');
+    setTimeout(function() { toast.classList.remove('show'); }, 4000);
+  }
+</script>
+</body>
+</html>
