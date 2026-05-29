@@ -1,0 +1,282 @@
+<!-- Xem màn hình client -->
+<div id="screen-view" class="tab-content">
+    <h2 class="section-title">
+        <i class="fas fa-tv"></i> Xem màn hình máy trạm
+    </h2>
+    <div class="form-container" style="background:#f1f5f9;padding:20px;border-radius:12px;">
+
+        <!-- Toolbar -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+            <button class="btn btn-primary btn-sm" onclick="refreshAllScreens()">
+                <i class="fas fa-sync-alt"></i> Làm mới tất cả
+            </button>
+            <button class="btn btn-sm btn-success" onclick="toggleAutoRefresh()" id="autoRefreshBtn">
+                <i class="fas fa-play"></i> Bật tự động
+            </button>
+            <span id="gridCountdown" style="display:none;font-size:12px;color:#64748b;background:#e2e8f0;border-radius:10px;padding:3px 10px;">
+                Làm mới sau: <b id="gridCountdownSec">5</b>s
+            </span>
+            <div style="margin-left:auto;display:flex;gap:16px;font-size:13px;font-weight:600;">
+                <span>🟢 Online: <span id="statOnline" style="color:#16a34a;">0</span></span>
+                <span>🔴 Offline: <span id="statOffline" style="color:#dc2626;">0</span></span>
+                <span style="color:#94a3b8;font-weight:400;" id="lastUpdated"></span>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div id="screensGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;">
+            {% for computer in computers %}
+            {% set is_online = computer.status != 'offline' %}
+
+            <div data-computer-id="{{ computer.id }}"
+                 data-online="{{ 'true' if is_online else 'false' }}"
+                 {% if is_online %}onclick="showScreenPopup('{{ computer.name }}', {{ computer.id }})"{% endif %}
+                 style="
+                    border-radius:10px;
+                    overflow:hidden;
+                    border:2px solid {{ '#22c55e' if is_online else '#e5e7eb' }};
+                    background:{{ '#f0fdf4' if is_online else '#ffffff' }};
+                    box-shadow:{{ '0 2px 12px rgba(34,197,94,.2)' if is_online else '0 1px 4px rgba(0,0,0,.08)' }};
+                    cursor:{{ 'pointer' if is_online else 'default' }};
+                    opacity:{{ '1' if is_online else '0.7' }};
+                    transition:transform .15s,box-shadow .15s;
+                 "
+                 {% if is_online %}
+                 onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(34,197,94,.3)'"
+                 onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(34,197,94,.2)'"
+                 {% endif %}
+            >
+                <!-- Card Header -->
+                <div style="
+                    display:flex;align-items:center;justify-content:space-between;
+                    padding:7px 10px 6px;
+                    background:{{ '#dcfce7' if is_online else '#f9fafb' }};
+                    border-bottom:1px solid {{ '#bbf7d0' if is_online else '#e5e7eb' }};
+                ">
+                    <!-- Tên máy + dot -->
+                    <div style="display:flex;align-items:center;gap:5px;overflow:hidden;">
+                        <span style="
+                            width:8px;height:8px;border-radius:50%;flex-shrink:0;
+                            background:{{ '#22c55e' if is_online else '#9ca3af' }};
+                            {{ 'box-shadow:0 0 6px #22c55e;' if is_online else '' }}
+                        "></span>
+                        <span style="font-size:12px;font-weight:700;color:{{ '#15803d' if is_online else '#6b7280' }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            {{ computer.name }}
+                        </span>
+                    </div>
+                    <!-- Badge -->
+                    <span style="
+                        font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;flex-shrink:0;margin-left:4px;
+                        background:{{ '#16a34a' if is_online else '#e5e7eb' }};
+                        color:{{ '#fff' if is_online else '#9ca3af' }};
+                    ">{{ 'Online' if is_online else 'Offline' }}</span>
+                </div>
+
+                <!-- Thumbnail area -->
+                <div style="position:relative;width:100%;height:110px;background:{{ '#e8f5e9' if is_online else '#f3f4f6' }};display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                    {% if is_online %}
+                    <img id="thumb-{{ computer.id }}" src="" alt="{{ computer.name }}"
+                         style="width:100%;height:100%;object-fit:cover;display:none;" />
+                    <div id="spinner-{{ computer.id }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:#86efac;font-size:11px;gap:5px;position:absolute;inset:0;">
+                        <i class="fas fa-desktop" style="font-size:28px;color:#4ade80;"></i>
+                        <span style="color:#16a34a;">Nhấn để xem</span>
+                    </div>
+                    <div id="thumbtime-{{ computer.id }}" style="display:none;position:absolute;bottom:4px;right:5px;font-size:9px;color:#fff;background:rgba(0,0,0,.5);border-radius:4px;padding:1px 5px;"></div>
+                    {% else %}
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:#d1d5db;font-size:11px;gap:5px;">
+                        <i class="fas fa-desktop" style="font-size:28px;color:#d1d5db;"></i>
+                        <span style="color:#9ca3af;">Máy offline</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Card Footer: IP -->
+                <div style="padding:5px 10px 6px;font-size:10px;color:{{ '#15803d' if is_online else '#9ca3af' }};background:{{ '#f0fdf4' if is_online else '#f9fafb' }};">
+                    <i class="fas fa-network-wired" style="margin-right:3px;"></i>{{ computer.ip_address or '—' }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Popup fullscreen ───────────────────────── -->
+<div id="screenPopupOverlay" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;">
+
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(0,0,0,.9);border-bottom:1px solid #333;flex-shrink:0;z-index:1;">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-tv" style="color:#4ade80;"></i>
+            <span id="screenPopupTitle" style="font-weight:700;color:#fff;font-size:1rem;"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-primary" onclick="refreshCurrentScreen()" id="popupReloadBtn">
+                <i class="fas fa-sync-alt"></i> Reload
+            </button>
+            <button class="btn btn-sm btn-success" onclick="togglePopupAutoRefresh()" id="popupAutoRefreshBtn">
+                <i class="fas fa-play"></i> Tự động
+            </button>
+            <select id="popupIntervalSelect" onchange="changePopupInterval()" style="background:#334155;color:#e2e8f0;border:1px solid #475569;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;">
+                <option value="2">2s</option>
+                <option value="3" selected>3s</option>
+                <option value="5">5s</option>
+                <option value="10">10s</option>
+                <option value="15">15s</option>
+                <option value="30">30s</option>
+            </select>
+            <span id="popupCountdown" style="display:none;font-size:12px;color:#94a3b8;background:rgba(255,255,255,.1);border-radius:10px;padding:2px 10px;">
+                <b id="popupCountdownSec" style="color:#4ade80;">3</b>s
+            </span>
+            <span id="popupLastUpdated" style="color:#94a3b8;font-size:12px;">Lần cuối: —</span>
+            <button onclick="hideScreenPopup()" title="Đóng (ESC)"
+                style="width:28px;height:28px;font-size:1.1rem;background:#ef4444;border:none;border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;margin-left:4px;">
+                &times;
+            </button>
+        </div>
+    </div>
+
+    <!-- Ảnh fullscreen - CHỈ 1 thẻ img duy nhất -->
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;">
+        <img id="screenPopupImg" alt="Màn hình" style="max-width:100%;max-height:100%;object-fit:contain;display:none;" />
+        <div id="popupSpinner" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;gap:8px;">
+            <i class="fas fa-circle-notch fa-spin" style="font-size:32px;color:#4ade80;"></i>
+            Đang tải ảnh...
+        </div>
+    </div>
+</div>
+
+<script>
+var currentComputerId=null,popupAutoRefreshInterval=null,popupCountdownInterval=null,
+    gridAutoRefreshInterval=null,gridCountdownInterval=null,
+    POPUP_REFRESH_SEC=3,GRID_REFRESH_SEC=5;
+
+// Thống kê
+(function(){
+    var on=document.querySelectorAll('#screensGrid [data-online="true"]').length;
+    var all=document.querySelectorAll('#screensGrid [data-computer-id]').length;
+    document.getElementById('statOnline').textContent=on;
+    document.getElementById('statOffline').textContent=all-on;
+})();
+
+// Popup fullscreen
+function showScreenPopup(name,id){
+    currentComputerId=id;
+    document.getElementById('screenPopupTitle').textContent=name;
+    var overlay=document.getElementById('screenPopupOverlay');
+    overlay.style.display='flex';
+    var img=document.getElementById('screenPopupImg');
+    img.style.display='none';
+    img.removeAttribute('src');
+    document.getElementById('popupSpinner').style.display='flex';
+    document.getElementById('popupLastUpdated').textContent='Lần cuối: —';
+    _loadPopupImg();
+    _startPopupAutoRefresh();
+}
+function hideScreenPopup(){
+    _stopPopupAutoRefresh();
+    document.getElementById('screenPopupOverlay').style.display='none';
+    var img=document.getElementById('screenPopupImg');
+    img.style.display='none';
+    img.removeAttribute('src');
+    currentComputerId=null;
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')hideScreenPopup();});
+
+// Load ảnh - 1 img duy nhất, preload rồi thay src
+function _loadPopupImg(){
+    if(!currentComputerId)return;
+    var img=document.getElementById('screenPopupImg');
+    var tmp=new Image();
+    tmp.onload=function(){
+        img.src=tmp.src;
+        img.style.display='block';
+        document.getElementById('popupSpinner').style.display='none';
+        document.getElementById('popupLastUpdated').textContent='Lần cuối: '+new Date().toLocaleTimeString();
+    };
+    tmp.onerror=function(){
+        document.getElementById('popupLastUpdated').textContent='⚠ Lỗi lúc '+new Date().toLocaleTimeString();
+    };
+    tmp.src='/api/remote/screenshot/'+currentComputerId+'?_='+Date.now();
+}
+function refreshCurrentScreen(){
+    var btn=document.getElementById('popupReloadBtn'),ico=btn.querySelector('i');
+    ico.classList.add('fa-spin'); _loadPopupImg();
+    setTimeout(function(){ico.classList.remove('fa-spin');},1000);
+}
+
+// Chọn chu kỳ
+function changePopupInterval(){
+    POPUP_REFRESH_SEC=parseInt(document.getElementById('popupIntervalSelect').value)||3;
+    if(popupAutoRefreshInterval){_stopPopupAutoRefresh();_startPopupAutoRefresh();}
+}
+
+// Auto refresh popup
+function togglePopupAutoRefresh(){popupAutoRefreshInterval?_stopPopupAutoRefresh():_startPopupAutoRefresh();}
+function _startPopupAutoRefresh(){
+    if(popupAutoRefreshInterval)return;
+    var sec=POPUP_REFRESH_SEC;
+    document.getElementById('popupCountdownSec').textContent=sec;
+    document.getElementById('popupCountdown').style.display='inline-block';
+    popupCountdownInterval=setInterval(function(){sec=sec<=1?POPUP_REFRESH_SEC:sec-1;document.getElementById('popupCountdownSec').textContent=sec;},1000);
+    popupAutoRefreshInterval=setInterval(function(){
+        if(document.getElementById('screenPopupOverlay').style.display!=='none')_loadPopupImg();
+        else _stopPopupAutoRefresh();
+    },POPUP_REFRESH_SEC*1000);
+    _setPopupAutoRefreshUI(true); _loadPopupImg();
+}
+function _stopPopupAutoRefresh(){
+    clearInterval(popupAutoRefreshInterval);clearInterval(popupCountdownInterval);
+    popupAutoRefreshInterval=popupCountdownInterval=null;
+    document.getElementById('popupCountdown').style.display='none';
+    _setPopupAutoRefreshUI(false);
+}
+function _setPopupAutoRefreshUI(on){
+    var b=document.getElementById('popupAutoRefreshBtn');if(!b)return;
+    b.innerHTML=on?'<i class="fas fa-pause"></i> Dừng':'<i class="fas fa-play"></i> Tự động';
+    b.className='btn btn-sm '+(on?'btn-warning':'btn-success');
+}
+
+// Auto grid
+function toggleAutoRefresh(){gridAutoRefreshInterval?_stopGridAutoRefresh():_startGridAutoRefresh();}
+function _startGridAutoRefresh(){
+    if(gridAutoRefreshInterval)return;
+    var sec=GRID_REFRESH_SEC;
+    document.getElementById('gridCountdownSec').textContent=sec;
+    document.getElementById('gridCountdown').style.display='inline-block';
+    gridCountdownInterval=setInterval(function(){sec=sec<=1?GRID_REFRESH_SEC:sec-1;document.getElementById('gridCountdownSec').textContent=sec;},1000);
+    gridAutoRefreshInterval=setInterval(refreshAllScreens,GRID_REFRESH_SEC*1000);
+    _setGridAutoRefreshUI(true); refreshAllScreens();
+}
+function _stopGridAutoRefresh(){
+    clearInterval(gridAutoRefreshInterval);clearInterval(gridCountdownInterval);
+    gridAutoRefreshInterval=gridCountdownInterval=null;
+    document.getElementById('gridCountdown').style.display='none';
+    _setGridAutoRefreshUI(false);
+}
+function _setGridAutoRefreshUI(on){
+    var b=document.getElementById('autoRefreshBtn');if(!b)return;
+    b.innerHTML=on?'<i class="fas fa-pause"></i> Dừng tự động':'<i class="fas fa-play"></i> Bật tự động';
+    b.className='btn btn-sm '+(on?'btn-warning':'btn-success');
+}
+
+// Refresh thumbnails
+function refreshAllScreens(){
+    document.querySelectorAll('#screensGrid [data-online="true"]').forEach(function(card){
+        var cid=card.getAttribute('data-computer-id');
+        var thumb=document.getElementById('thumb-'+cid);
+        var spinner=document.getElementById('spinner-'+cid);
+        var badge=document.getElementById('thumbtime-'+cid);
+        if(!thumb)return;
+        var p=new Image();
+        p.onload=function(){
+            thumb.src=p.src; thumb.style.display='block';
+            if(spinner)spinner.style.display='none';
+            if(badge){badge.style.display='block';badge.textContent=new Date().toLocaleTimeString();}
+        };
+        p.onerror=function(){if(badge&&thumb.src)badge.textContent='⚠ '+new Date().toLocaleTimeString();};
+        p.src='/api/remote/screenshot/'+cid+'?_='+Date.now();
+    });
+    var el=document.getElementById('lastUpdated');
+    if(el)el.textContent='Cập nhật: '+new Date().toLocaleTimeString();
+}
+</script>

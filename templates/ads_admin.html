@@ -1,0 +1,968 @@
+<!-- Quản lý quảng cáo - Fixed Version -->
+<div id="ads-management" class="tab-content">
+    <h2 class="section-title">
+        <i class="fas fa-ad"></i> Quản lý quảng cáo
+    </h2>
+
+    <!-- Giao diện chia 2 cột -->
+    <div class="form-container d-flex flex-wrap gap-3" style="align-items: flex-start;">
+        
+        <!-- Cột trái: Form thêm/sửa quảng cáo -->
+        <div style="flex: 1; min-width: 300px;">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title" id="form-title">
+                        <i class="fas fa-plus"></i> <span id="form-title-text">Thêm quảng cáo mới</span>
+                    </h2>
+                    
+                    <!-- Thông báo lỗi -->
+                    <div id="error-alert" class="alert alert-danger" style="display: none;"></div>
+                    <!-- Thông báo thành công -->
+                    <div id="success-alert" class="alert alert-success" style="display: none;"></div>
+                    
+                    <div class="form-group">
+                        <label>Hình ảnh quảng cáo <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" id="ad-image-file" accept="image/*" class="custom-file-input">
+                            <label class="custom-file-label" for="ad-image-file">Chọn tệp...</label>
+                        </div>
+                        <small class="form-text text-muted">Kích thước đề nghị: 800x400px, tối đa 5MB</small>
+                        
+                        <div class="image-preview mt-3" id="image-preview" style="display: none;">
+                            <img id="preview-img" src="#" alt="Preview" class="img-fluid rounded">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mt-3">
+                        <label>Liên kết đích <span class="text-danger">*</span></label>
+                        <input type="url" id="ad-link-url" class="form-control" placeholder="https://example.com">
+                        <small class="form-text text-muted">URL phải bắt đầu bằng http:// hoặc https://</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-success" id="submit-btn" onclick="submitAd()">
+                            <i class="fas fa-plus"></i> <span id="submit-btn-text">Thêm quảng cáo</span>
+                        </button>
+                        <button class="btn btn-secondary ml-2" onclick="resetForm()">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Danh sách quảng cáo -->
+        <div style="flex: 1; min-width: 300px;">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="card-title mb-0">Danh sách quảng cáo</h2>
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadAds()">
+                            <i class="fas fa-sync-alt"></i> Làm mới
+                        </button>
+                    </div>
+                    
+                    <div id="loading-spinner" class="text-center my-3" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Hình ảnh</th>
+                                    <th>Liên kết</th>
+                                    <th width="100">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ads-list">
+                                <!-- Ads will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let editingAdId = null;
+
+// Khởi tạo khi DOM được tải
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Ads management loaded');
+    initializeAdsManagement();
+});
+
+// Khởi tạo quản lý quảng cáo
+function initializeAdsManagement() {
+    // Thiết lập event listener cho input file
+    const fileInput = document.getElementById('ad-image-file');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+    
+    // Thiết lập event listener cho URL input
+    const urlInput = document.getElementById('ad-link-url');
+    if (urlInput) {
+        urlInput.addEventListener('blur', validateUrl);
+    }
+    
+    // Load danh sách quảng cáo
+    loadAds();
+}
+
+// Xử lý chọn file với validation cải thiện
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const fileLabel = document.querySelector('.custom-file-label');
+    
+    // Reset preview nếu không có file
+    if (!file) {
+        if (imagePreview) imagePreview.style.display = 'none';
+        if (fileLabel) fileLabel.textContent = 'Chọn tệp...';
+        return;
+    }
+    
+    // Kiểm tra kích thước file (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showError('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+        e.target.value = '';
+        if (fileLabel) fileLabel.textContent = 'Chọn tệp...';
+        return;
+    }
+    
+    // Kiểm tra định dạng file
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        showError('Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG, GIF, WebP');
+        e.target.value = '';
+        if (fileLabel) fileLabel.textContent = 'Chọn tệp...';
+        return;
+    }
+    
+    // Hiển thị preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (previewImg && imagePreview) {
+            previewImg.src = e.target.result;
+            imagePreview.style.display = 'block';
+        }
+    };
+    
+    reader.onerror = function() {
+        showError('Lỗi khi đọc file ảnh');
+        e.target.value = '';
+        if (fileLabel) fileLabel.textContent = 'Chọn tệp...';
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // Cập nhật tên file
+    if (fileLabel) {
+        fileLabel.textContent = file.name;
+    }
+    
+    // Ẩn thông báo lỗi khi chọn file hợp lệ
+    hideError();
+}
+
+// Validate URL
+function validateUrl() {
+    const urlInput = document.getElementById('ad-link-url');
+    if (!urlInput || !urlInput.value.trim()) return;
+    
+    try {
+        new URL(urlInput.value.trim());
+        urlInput.classList.remove('is-invalid');
+        urlInput.classList.add('is-valid');
+    } catch (e) {
+        urlInput.classList.remove('is-valid');
+        urlInput.classList.add('is-invalid');
+    }
+}
+
+// Submit form thêm/sửa quảng cáo
+async function submitAd() {
+    const fileInput = document.getElementById('ad-image-file');
+    const linkInput = document.getElementById('ad-link-url');
+    
+    // Validate inputs
+    if (!editingAdId && (!fileInput.files || !fileInput.files[0])) {
+        showError('Vui lòng chọn hình ảnh quảng cáo');
+        return;
+    }
+    
+    if (!linkInput.value) {
+        showError('Vui lòng nhập liên kết đích');
+        return;
+    }
+
+    try {
+        setSubmitButtonLoading(true);
+        
+        // Tạo FormData
+        const formData = new FormData();
+        if (fileInput.files[0]) {
+            formData.append('image', fileInput.files[0]);
+        }
+        formData.append('link', linkInput.value);
+
+        let response;
+        let url;
+        
+        if (editingAdId) {
+            // Sửa quảng cáo
+            url = `/api/admin/advertisements/${editingAdId}`;
+            response = await fetch(url, {
+                method: 'PUT',
+                body: formData
+            });
+        } else {
+            // Thêm mới
+            url = '/api/admin/advertisements';
+            response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+        }
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Lỗi từ server');
+        }
+
+        if (result.success) {
+            showSuccess(editingAdId ? 'Cập nhật quảng cáo thành công!' : 'Thêm quảng cáo thành công!');
+            resetForm();
+            loadAds();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Lỗi: ' + (error.message || 'Có lỗi xảy ra'));
+    } finally {
+        setSubmitButtonLoading(false);
+    }
+}
+
+// Validate form
+function validateForm(fileInput, linkUrl) {
+    // Kiểm tra ảnh (chỉ bắt buộc khi thêm mới)
+    if (!editingAdId && (!fileInput || !fileInput.files || !fileInput.files[0])) {
+        return 'Vui lòng chọn ảnh quảng cáo';
+    }
+    
+    // Kiểm tra URL
+    if (!linkUrl) {
+        return 'Vui lòng nhập liên kết đích';
+    }
+    
+    // Validate URL format
+    try {
+        new URL(linkUrl);
+    } catch (e) {
+        return 'Liên kết không hợp lệ. Vui lòng nhập URL đầy đủ (bắt đầu bằng http:// hoặc https://)';
+    }
+    
+    return null;
+}
+
+// Upload ảnh
+async function uploadImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    console.log('Uploading image...');
+    const response = await fetch('/api/upload_ad_image', {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Upload response:', data);
+    
+    if (!data.success) {
+        throw new Error(data.message || 'Lỗi upload ảnh');
+    }
+    
+    return data.image_url;
+}
+
+// Tạo quảng cáo mới
+async function createAdvertisement(imageUrl, linkUrl) {
+    console.log('Creating advertisement...');
+    const response = await fetch('/api/admin/advertisements', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            image_url: imageUrl,
+            link: linkUrl
+        })
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Create failed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Create ad response:', data);
+    
+    if (!data.success) {
+        throw new Error(data.message || 'Lỗi thêm quảng cáo');
+    }
+    
+    return true;
+}
+
+// Cập nhật quảng cáo
+async function updateAdvertisement(adId, imageUrl, linkUrl) {
+    console.log('Updating advertisement...');
+    const updateData = { link: linkUrl };
+    if (imageUrl) {
+        updateData.image_url = imageUrl;
+    }
+    
+    const response = await fetch(`/api/admin/advertisements/${adId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Update failed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Update ad response:', data);
+    
+    if (!data.success) {
+        throw new Error(data.message || 'Lỗi cập nhật quảng cáo');
+    }
+    
+    return true;
+}
+
+// Đặt trạng thái loading cho button submit
+function setSubmitButtonLoading(isLoading) {
+    const submitBtn = document.getElementById('submit-btn');
+    const submitBtnText = document.getElementById('submit-btn-text');
+    
+    if (submitBtn) {
+        submitBtn.disabled = isLoading;
+        if (isLoading) {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+        } else {
+            const action = editingAdId ? 'Cập nhật' : 'Thêm';
+            submitBtn.innerHTML = `<i class="fas fa-${editingAdId ? 'save' : 'plus'}"></i> ${action} quảng cáo`;
+        }
+    }
+}
+
+// Reset form
+function resetForm() {
+    const fileInput = document.getElementById('ad-image-file');
+    const linkInput = document.getElementById('ad-link-url');
+    const imagePreview = document.getElementById('image-preview');
+    const fileLabel = document.querySelector('.custom-file-label');
+    const formTitle = document.getElementById('form-title-text');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // Reset các trường
+    if (fileInput) {
+        fileInput.value = '';
+        fileInput.classList.remove('is-valid', 'is-invalid');
+    }
+    if (linkInput) {
+        linkInput.value = '';
+        linkInput.classList.remove('is-valid', 'is-invalid');
+    }
+    if (imagePreview) imagePreview.style.display = 'none';
+    if (fileLabel) fileLabel.textContent = 'Chọn tệp...';
+    
+    // Reset form về chế độ thêm mới
+    editingAdId = null;
+    if (formTitle) formTitle.textContent = 'Thêm quảng cáo mới';
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-plus"></i> Thêm quảng cáo';
+    }
+    
+    hideError();
+    hideSuccess();
+}
+
+// Hiển thị thông báo lỗi
+function showError(message) {
+    const errorAlert = document.getElementById('error-alert');
+    if (errorAlert) {
+        errorAlert.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        errorAlert.style.display = 'block';
+        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Ẩn thông báo lỗi
+function hideError() {
+    const errorAlert = document.getElementById('error-alert');
+    if (errorAlert) {
+        errorAlert.style.display = 'none';
+    }
+}
+
+// Hiển thị thông báo thành công
+function showSuccess(message) {
+    const successAlert = document.getElementById('success-alert');
+    if (successAlert) {
+        successAlert.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+        successAlert.style.display = 'block';
+        
+        // Tự động ẩn sau 3 giây
+        setTimeout(() => {
+            hideSuccess();
+        }, 3000);
+    }
+}
+
+// Ẩn thông báo thành công
+function hideSuccess() {
+    const successAlert = document.getElementById('success-alert');
+    if (successAlert) {
+        successAlert.style.display = 'none';
+    }
+}
+
+// Tải danh sách quảng cáo với retry mechanism
+async function loadAds(retryCount = 0) {
+    const adsList = document.getElementById('ads-list');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const maxRetries = 3;
+    
+    if (!adsList) {
+        console.error('Không tìm thấy element ads-list');
+        return;
+    }
+    
+    try {
+        // Hiển thị loading chỉ khi lần đầu tải
+        if (retryCount === 0) {
+            adsList.innerHTML = '';
+            if (loadingSpinner) loadingSpinner.style.display = 'block';
+        }
+        
+        console.log(`Loading advertisements... (attempt ${retryCount + 1})`);
+        
+        // Thêm timeout cho request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch('/api/admin/advertisements', {
+            signal: controller.signal,
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+        }
+        
+        const ads = await response.json();
+        console.log('Loaded ads:', ads);
+        
+        // Kiểm tra cấu trúc response
+        let adsArray = [];
+        if (ads.success && Array.isArray(ads.data)) {
+            adsArray = ads.data;
+        } else if (Array.isArray(ads)) {
+            adsArray = ads;
+        } else {
+            console.warn('Unexpected response format:', ads);
+            adsArray = [];
+        }
+        
+        renderAdsList(adsArray);
+        
+    } catch (error) {
+        console.error('Error loading ads:', error);
+        
+        // Retry logic
+        if (retryCount < maxRetries && (error.name === 'AbortError' || error.message.includes('fetch'))) {
+            console.log(`Retrying... (${retryCount + 1}/${maxRetries})`);
+            setTimeout(() => loadAds(retryCount + 1), 1000 * (retryCount + 1)); // Exponential backoff
+            return;
+        }
+        
+        // Hiển thị lỗi cuối cùng
+        if (adsList) {
+            adsList.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="mt-2">
+                            <strong>Lỗi khi tải danh sách quảng cáo</strong><br>
+                            <small>${error.message}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadAds()">
+                            <i class="fas fa-redo"></i> Thử lại
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+    } finally {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+    }
+}
+
+// Render danh sách quảng cáo
+function renderAdsList(ads) {
+    const adsList = document.getElementById('ads-list');
+    
+    if (!Array.isArray(ads) || ads.length === 0) {
+        adsList.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                    <i class="fas fa-images fa-2x mb-2"></i><br>
+                    Chưa có quảng cáo nào
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Tạo HTML cho từng quảng cáo
+    const adsHTML = ads.map((ad, index) => {
+        // Xử lý URL ảnh
+        let imageUrl = ad.image_url || '';
+        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+            imageUrl = '/' + imageUrl;
+        }
+        
+        return `
+            <tr>
+                <td class="align-middle">${index + 1}</td>
+                <td class="align-middle">
+                    ${imageUrl ? 
+                        `<img src="${imageUrl}" 
+                             style="max-width: 120px; max-height: 80px; object-fit: cover;" 
+                             class="rounded shadow-sm" 
+                             onerror="handleImageError(this)"
+                             loading="lazy"
+                             alt="Ad Image">` : 
+                        '<span class="text-muted"><i class="fas fa-image"></i> Không có ảnh</span>'}
+                </td>
+                <td class="align-middle">
+                    <a href="${ad.link || '#'}" 
+                       target="_blank" 
+                       class="text-truncate d-inline-block text-decoration-none" 
+                       style="max-width: 200px;" 
+                       title="${ad.link || ''}"
+                       ${!ad.link ? 'onclick="return false;" class="text-muted"' : ''}>
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        ${ad.link ? (ad.link.length > 30 ? ad.link.substring(0, 30) + '...' : ad.link) : 'Không có link'}
+                    </a>
+                </td>
+                <td class="align-middle">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" 
+                                onclick="editAd(${ad.id}, '${imageUrl}', '${ad.link || ''}')" 
+                                title="Sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="deleteAd(${ad.id}, event)" 
+                                title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    adsList.innerHTML = adsHTML;
+}
+
+// Xử lý lỗi ảnh
+function handleImageError(img) {
+    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iODAiIGZpbGw9IiNmOGY5ZmEiIHN0cm9rZT0iI2RlZTJlNiIvPjx0ZXh0IHg9IjYwIiB5PSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNmM3NTdkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+TG9hZCBFcnJvcjwvdGV4dD48L3N2Zz4=';
+    img.title = 'Lỗi tải ảnh';
+    img.classList.add('border-danger');
+}
+
+// Sửa quảng cáo
+function editAd(adId, imageUrl, link) {
+    editingAdId = adId;
+    
+    // Cập nhật UI form
+    const formTitle = document.getElementById('form-title-text');
+    const linkInput = document.getElementById('ad-link-url');
+    const submitBtn = document.getElementById('submit-btn');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (formTitle) formTitle.textContent = 'Sửa quảng cáo';
+    if (linkInput) linkInput.value = link;
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Cập nhật quảng cáo';
+    }
+    
+    // Hiển thị ảnh hiện tại nếu có
+    if (imageUrl && imagePreview && previewImg) {
+        previewImg.src = imageUrl;
+        imagePreview.style.display = 'block';
+    }
+    
+    // Scroll đến form
+    document.getElementById('form-title').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Xóa quảng cáo với confirmation cải thiện
+async function deleteAd(adId, event) {
+    if (!adId) {
+        console.error('Ad ID is required');
+        return;
+    }
+    
+    try {
+        let confirmed = false;
+        
+        // Sử dụng SweetAlert nếu có, nếu không dùng confirm
+        if (typeof Swal !== 'undefined') {
+            const result = await Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: 'Bạn có chắc muốn xóa quảng cáo này? Hành động này không thể hoàn tác.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            });
+            confirmed = result.isConfirmed;
+        } else {
+            confirmed = confirm('Bạn có chắc muốn xóa quảng cáo này? Hành động này không thể hoàn tác.');
+        }
+        
+        if (!confirmed) return;
+        
+        console.log(`Deleting ad with ID: ${adId}`);
+        
+        // Hiển thị loading state cho button xóa
+        const deleteBtn = event.target.closest('button');
+        const originalHTML = deleteBtn.innerHTML;
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        // Gọi API xóa với phương thức DELETE
+        const response = await fetch(`/api/admin/advertisements/${adId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Delete failed: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Delete response:', data);
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Lỗi khi xóa quảng cáo');
+        }
+        
+        // Thông báo thành công
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Đã xóa!', 'Quảng cáo đã được xóa thành công', 'success');
+        } else {
+            showSuccess('Đã xóa quảng cáo thành công!');
+        }
+        
+        // Reset form nếu đang edit ad này
+        if (editingAdId == adId) {
+            resetForm();
+        }
+        
+        // Load lại danh sách
+        loadAds();
+        
+    } catch (error) {
+        console.error('Error deleting ad:', error);
+        
+        // Khôi phục trạng thái button
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalHTML;
+        }
+        
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Lỗi!', error.message || 'Có lỗi xảy ra khi xóa', 'error');
+        } else {
+            showError('Lỗi: ' + (error.message || 'Có lỗi xảy ra khi xóa'));
+        }
+    }
+}
+</script>
+
+<style>
+/* Tối ưu CSS cho phần danh sách quảng cáo */
+#ads-management .table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+#ads-list tr {
+    transition: all 0.2s ease;
+}
+
+#ads-list tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+#ads-list td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+#ads-list td:first-child {
+    width: 50px;
+    text-align: center;
+}
+
+#ads-list td:nth-child(2) {
+    width: 150px;
+}
+
+#ads-list td:nth-child(3) {
+    max-width: 250px;
+}
+
+#ads-list td:last-child {
+    width: 100px;
+    text-align: center;
+}
+
+#ads-list img {
+    max-width: 120px;
+    max-height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Điều chỉnh kích thước và hiển thị ảnh */
+#ads-list img {
+    max-width: 100px;  /* Giảm từ 120px xuống 100px */
+    max-height: 60px;  /* Giảm từ 80px xuống 60px */
+    width: auto;
+    height: auto;
+    object-fit: contain; /* Thay cover bằng contain để xem toàn bộ ảnh */
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Làm mờ shadow */
+    border: 1px solid #eee; /* Thêm viền mờ */
+    padding: 2px;
+    background: white;
+}
+
+/* Điều chỉnh kích thước cột hình ảnh */
+#ads-list td:nth-child(2) {
+    width: 120px; /* Giảm từ 150px xuống 120px */
+    text-align: center;
+}
+
+/* Thêm hiệu ứng hover tinh tế */
+#ads-list img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+/* Đảm bảo container ảnh cân đối */
+.image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    width: 100px;
+    margin: 0 auto;
+}
+
+#ads-list .btn-group .btn {
+    padding: 5px 10px;
+    font-size: 13px;
+}
+
+#ads-list .text-truncate {
+    display: inline-block;
+    max-width: 200px;
+}
+
+/* Tối ưu phần header */
+#ads-management .card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Tối ưu phần làm mới */
+#ads-management .btn-outline-primary {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    font-size: 13px;
+}
+
+#ads-management .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Tối ưu phần không có dữ liệu */
+#ads-management .text-muted {
+    color: #6c757d !important;
+    font-size: 0.9rem;
+}
+
+#ads-management .fa-images {
+    color: #dee2e6;
+    font-size: 2.5rem;
+}
+
+/* Tối ưu phần phân trang (nếu có) */
+.pagination {
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.page-link {
+    color: #0d6efd;
+}
+
+/* Fix chữ "Hành động" xuống hàng */
+.table thead th {
+    white-space: nowrap; /* Ngăn không cho chữ xuống dòng */
+    text-align: center; /* Căn giữa nội dung */
+    padding: 12px 8px; /* Điều chỉnh padding cho phù hợp */
+}
+
+/* Điều chỉnh chiều rộng cột Hành động */
+.table thead th:nth-child(4) {
+    width: 120px; /* Cố định chiều rộng */
+}
+
+/* Đảm bảo nút hành động nằm trên 1 dòng */
+.btn-group {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+
+/* Điều chỉnh phần preview ảnh upload */
+.image-preview {
+    border: 1px dashed #ddd;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    max-width: 100%; /* Giới hạn chiều rộng tối đa */
+}
+
+#preview-img {
+    max-height: 150px; /* Giảm từ 200px xuống 150px */
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain; /* Hiển thị toàn bộ ảnh không bị crop */
+    display: block;
+    margin: 0 auto;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Điều chỉnh phần chọn file */
+.custom-file {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.custom-file-input {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: calc(1.5em + 0.75rem + 2px);
+    margin: 0;
+    opacity: 0;
+}
+
+.custom-file-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0.75rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-file-label::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: block;
+    height: calc(1.5em + 0.75rem);
+    padding: 0.375rem 0.75rem;
+    line-height: 1.5;
+    color: #495057;
+    content: "Duyệt";
+    background-color: #e9ecef;
+    border-left: inherit;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+</style>

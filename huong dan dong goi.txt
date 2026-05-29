@@ -1,0 +1,77 @@
+pyinstaller --noconsole --onefile --icon=myicon.ico --add-data "firebase_key.json;." --add-data "background.jpg;." --name=QuanLyPhong-Client-Test client_app-test.py
+
+pyinstaller --noconsole --onefile --add-data "templates;templates" --add-data "static;static" --add-data "firebase_key.json;." --hidden-import=flask --hidden-import=flask_sqlalchemy --hidden-import=psycopg2 --name=DPT-SERVER --icon=myicon.ico app-test.py
+
+pyinstaller --noconsole --onefile --icon=myicon.ico --add-data "background.jpg;." client_app.py
+
+pyinstaller --noconsole --onefile --icon=myicon.ico --add-data "firebase_key.json;." --add-data "background.jpg;." --name "DPT-Client" client_app-test.py
+
+pyinstaller --noconsole --onefile --add-data "templates;templates" --add-data "static;static" --add-data "firebase_key.json;." --add-data "ads.json;." --hidden-import=flask --hidden-import=flask_sqlalchemy --hidden-import=psycopg2 --name=LabManager --icon=myicon.ico app-test.py
+
+netsh advfirewall firewall add rule name="QuanLyPhong-Client" dir=in action=allow protocol=TCP localport=5001
+
+ Tạo database và user
+
+
+CREATE DATABASE lab_manager;
+CREATE USER DPTIUH WITH PASSWORD 'libiuh2025';
+GRANT ALL PRIVILEGES ON DATABASE lab_manager TO DPTIUH;
+\q 
+
+Tạo các bảng thủ công
+
+-- Tạo bảng User (đặt trong dấu ngoặc kép vì user là từ khóa)
+CREATE TABLE "User" (
+    id SERIAL PRIMARY KEY,
+    student_id VARCHAR(20) UNIQUE NOT NULL,
+    name VARCHAR(100),
+    class_name VARCHAR(50),
+    khoa_vien VARCHAR(100),
+    password_hash VARCHAR(128) NOT NULL,
+    plain_password VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tạo bảng Computer
+CREATE TABLE Computer (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    mac_address VARCHAR(20),
+    ip_address VARCHAR(15),
+    status VARCHAR(20) DEFAULT 'offline',
+    last_active TIMESTAMP,
+    api_port INTEGER DEFAULT 5001
+);
+
+-- Tạo bảng Session
+CREATE TABLE Session (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES "User"(id),
+    computer_id INTEGER NOT NULL REFERENCES Computer(id),
+    login_time TIMESTAMP NOT NULL,
+    logout_time TIMESTAMP,
+    duration INTEGER
+);
+
+-- Tạo bảng Advertisement
+CREATE TABLE Advertisement (
+    id SERIAL PRIMARY KEY,
+    image_url VARCHAR(500) NOT NULL,
+    link VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Tạo các index để tối ưu hiệu năng
+CREATE INDEX idx_session_user_id ON Session(user_id);
+CREATE INDEX idx_session_computer_id ON Session(computer_id);
+CREATE INDEX idx_advertisement_active ON Advertisement(is_active);
+
+
+# Tạo venv (nếu chưa có)
+python -m venv venv
+
+# Kích hoạt
+venv\Scripts\activate  # Phải thấy (venv) ở đầu dòng Command Prompt
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process

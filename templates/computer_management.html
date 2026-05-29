@@ -1,0 +1,106 @@
+<!-- Quản lý phòng máy -->
+<div id="computer-management" class="tab-content active">
+    <h2 class="section-title">
+        <i class="fas fa-server"></i> Quản lý phòng máy
+    </h2>
+
+    <div class="action-buttons" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+        <button class="btn btn-primary" onclick="refreshComputers()">
+            <i class="fas fa-sync-alt"></i> Làm mới
+        </button>
+        
+        <form id="shutdownAllForm" action="{{ url_for('shutdown_all') }}" method="post" style="margin:0;">
+            <button class="btn btn-danger" type="button" onclick="confirmShutdownAll()">
+                <i class="fas fa-power-off"></i> Tắt tất cả
+            </button>
+        </form>
+        
+        <form id="shutdownOnlineForm" action="{{ url_for('shutdown_online') }}" method="post" style="margin:0;">
+            <button class="btn btn-purple" type="button" onclick="confirmShutdownOnline()">
+                <i class="fas fa-plug"></i> Tắt máy online
+            </button>
+        </form>
+        
+        <form id="restartAllForm" action="{{ url_for('restart_all') }}" method="post" style="margin:0;">
+            <button class="btn btn-warning" type="button" onclick="confirmRestartAll()">
+                <i class="fas fa-redo"></i> Khởi động lại
+            </button>
+        </form>
+
+        <span style="display:inline-block; width:1px; height:28px; background:var(--border-color); margin:0 0.3rem;"></span>
+
+        <div class="timeout-inline" style="display:inline-flex; align-items:center; gap:0.4rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:0.3rem 0.6rem;" title="Client sẽ nhận timeout mới khi đăng ký hoặc qua heartbeat">
+            <i class="fas fa-clock" style="color:var(--accent); font-size:0.8rem;"></i>
+            <label for="clientTimeoutInput" style="color:var(--text-secondary); font-size:0.78rem; white-space:nowrap;">Timeout (phút):</label>
+            <input id="clientTimeoutInput" type="number" min="1" step="1" value="{{ client_idle_timeout_seconds // 60 }}" style="width:58px; padding:0.25rem 0.4rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08); background:var(--bg-input); color:var(--text-primary); font-size:0.8rem; text-align:center;">
+            <button class="btn btn-primary btn-sm" onclick="updateClientTimeout()" style="padding:0.2rem 0.5rem !important; font-size:0.72rem !important;">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="computer-grid">
+        {% for computer in computers %}
+        <div class="computer-card {{ 'in_use' if computer.status in ['in_use', 'Active', 'Đang sử dụng'] else computer.status }}"
+             onclick='showComputerPopup(
+                {{ computer.name|tojson }},
+                {{ computer.ip_address|tojson }},
+                {{ computer.status|tojson }},
+                {{ (computer.last_active.strftime('%H:%M %d/%m') if computer.last_active else 'Chưa có')|tojson }},
+                {{ computer.id|tojson }}
+             )'>
+            <h3>{{ computer.name }}</h3>
+            <div class="status">
+                <span class="status-icon"></span>
+                <span class="status-text
+                    {% if computer.status == 'Tắt máy' %} status-shutdown
+                    {% elif computer.status == 'Khởi động lại' %} status-restart
+                    {% elif computer.status == 'online' %} text-success
+                    {% elif computer.status == 'offline' %} text-danger
+                    {% elif computer.status in ['in_use', 'Active', 'Đang sử dụng'] %} text-warning
+                    {% endif %}">
+                    {% if computer.status == 'online' %}
+                        Online
+                    {% elif computer.status == 'offline' %}
+                        Offline
+                    {% elif computer.status in ['in_use', 'Active', 'Đang sử dụng'] %}
+                        Active
+                    {% elif computer.status == 'Tắt máy' %}
+                        Tắt máy
+                    {% elif computer.status == 'Khởi động lại' %}
+                        Khởi động lại
+                    {% else %}
+                        {{ computer.status }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Popup hiển thị thông tin máy -->
+    <div id="computerOverlay" class="overlay" style="display:none;">
+        <div class="popup">
+            <div class="popup-header">
+                <div class="popup-header-inner">
+                    <span class="popup-title" id="popupComputerName">Tên máy</span>
+                    <button class="close-btn" onclick="hideComputerPopup()">&times;</button>
+                </div>
+            </div>
+            <div class="popup-body">
+                <div class="popup-info">
+                    <div class="info-row"><span class="info-label">IP:</span> <span class="info-value" id="popupComputerIp"></span></div>
+                    <div class="info-row"><span class="info-label">Trạng thái:</span> <span class="info-value" id="popupComputerStatus"></span></div>
+                    <div class="info-row"><span class="info-label">Hoạt động gần nhất:</span> <span class="info-value" id="popupComputerLastActive"></span></div>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <a id="popupShutdownLink" class="btn btn-danger disabled" href="#"><i class="fas fa-power-off"></i> Tắt máy</a>
+                <a id="popupRestartLink" class="btn btn-warning disabled" href="#"><i class="fas fa-redo"></i> Khởi động lại</a>
+                <a id="popupLogoutLink" class="btn btn-secondary disabled" href="#"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                <a id="popupRemoteLoginLink" class="btn btn-primary disabled" href="#"><i class="fas fa-sign-in-alt"></i> Đăng nhập từ xa</a>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,233 @@
+<div id="notification" class="tab-content">
+    <h2 class="section-title"><i class="fas fa-bell"></i> Gửi thông báo đến máy tính</h2>
+
+    <!-- Giao diện chia 2 cột -->
+    <div class="form-container d-flex flex-wrap gap-3" style="align-items: flex-start; width: 100%; max-width: 1200px; margin: 0 auto;">
+        
+        <!-- Cột trái: Máy tính đích dạng icon -->
+        <div style="flex: 0 1 45%; min-width: 360px;">
+            <div class="form-group">
+                <label>Máy tính đích:</label>
+                <div id="computer-icon-grid" class="computer-icon-grid"></div>
+                <input type="hidden" id="target_computer" value="all">
+            </div>
+        </div>
+
+        <!-- Cột phải: Nội dung và hành động -->
+        <div style="flex: 0 1 50%; min-width: 420px;">
+            <div class="form-group">
+                <label>Loại thông báo:</label>
+                <select id="notification_type" class="form-control">
+                    <option value="warning">Cảnh báo</option>
+                    <option value="info">Thông tin</option>
+                    <option value="alert">Báo động</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Nội dung thông báo:</label>
+                <textarea id="notification_message" class="form-control" rows="4"
+                          placeholder="Nhập nội dung thông báo..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Hành động yêu cầu:</label>
+                <select id="required_action" class="form-control">
+                    <option value="none">Không yêu cầu hành động</option>
+                    <option value="close_programs">Đóng các chương trình không liên quan học tập</option>
+                    <option value="lock_computer">Khóa máy tính</option>
+                    <option value="logout">Đăng xuất ngay lập tức</option>
+                </select>
+            </div>
+
+            <button id="send_notification_btn" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Gửi thông báo
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Icon dạng lưới máy tính đích */
+.computer-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr); /* 10 cột cố định */
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+}
+
+/* Co lại còn 4 cột trên mobile */
+@media (max-width: 768px) {
+    .computer-icon-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.computer-icon-item {
+    background-color: var(--bg-card, #16213e);
+    border: 2px solid var(--border-color, rgba(0,255,231,0.08));
+    border-radius: 6px;
+    padding: 0.3rem;
+    text-align: center;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: 0.3s ease;
+    white-space: nowrap;
+    color: var(--text-secondary, #8892a8);
+    overflow: visible;
+    text-overflow: unset;
+}
+
+/* Chỉ thu gọn tên máy khi màn hình nhỏ */
+@media (max-width: 768px) {
+    .computer-icon-item {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.computer-icon-item:hover {
+    background-color: rgba(0, 255, 231, 0.05);
+    border-color: rgba(0, 255, 231, 0.2);
+    color: var(--text-primary, #e0e6f0);
+}
+
+.computer-icon-item.active {
+    border-color: var(--accent, #00ffe7);
+    background-color: rgba(0, 255, 231, 0.1);
+    color: var(--accent, #00ffe7);
+    font-weight: bold;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadComputersForNotification();
+    document.getElementById('send_notification_btn').addEventListener('click', sendNotification);
+});
+
+function loadComputersForNotification() {
+    const grid = document.getElementById('computer-icon-grid');
+    const hiddenInput = document.getElementById('target_computer');
+
+    // Thêm ô "Tất cả"
+    const allItem = document.createElement('div');
+    allItem.className = 'computer-icon-item active';
+    allItem.textContent = 'Tất cả';
+    allItem.dataset.id = 'all';
+    grid.appendChild(allItem);
+
+    allItem.onclick = () => {
+        document.querySelectorAll('.computer-icon-item').forEach(el => el.classList.remove('active'));
+        allItem.classList.add('active');
+        hiddenInput.value = 'all';
+    };
+
+    fetch('/api/computers')
+        .then(response => response.json())
+        .then(computers => {
+            // Sắp xếp máy tính theo thứ tự đặc biệt
+            const sortedComputers = computers.sort((a, b) => {
+                // Tách số từ tên máy tính (ví dụ: "PC-01" -> 1)
+                const getNumber = (name) => parseInt(name.split('-')[1]) || 0;
+                
+                // Thứ tự đặc biệt theo hình ảnh
+                const customOrder = [
+                    "PC-01", "PC-02", "PC-03", "PC-04", "PC-05", "PC-06", "PC-07", "PC-08", "PC-09",
+                    "PC-11", "PC-12", "PC-13", "PC-14", "PC-15", "PC-16", "PC-17", "PC-18", "PC-19",
+                    "PC-21", "PC-22", "PC-23", "PC-24", "PC-25", "PC-26", "PC-27", "PC-28", "PC-29", "PC-30",
+                    "PC-31", "PC-32", "PC-34", "PC-35", "PC-36", "PC-37", "PC-38", "PC-39", "PC-40",
+                    "PC-41", "PC-42", "PC-44", "PC-45", "PC-46", "PC-47", "PC-48", "PC-49", "PC-50",
+                    "PC-51", "PC-52", "PC-53", "PC-54", "PC-55", "PC-56", "PC-57", "PC-58", "PC-59", "PC-60",
+                    "PC-61", "PC-62", "PC-64", "PC-65", "PC-66"
+                ];
+                
+                const indexA = customOrder.indexOf(a.name);
+                const indexB = customOrder.indexOf(b.name);
+                
+                // Nếu có trong danh sách custom thì sắp xếp theo đó
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                // Nếu không thì sắp xếp theo số
+                return getNumber(a.name) - getNumber(b.name);
+            });
+
+            // Thêm các máy tính vào grid
+            sortedComputers.forEach(computer => {
+                const item = document.createElement('div');
+                item.className = 'computer-icon-item';
+                item.textContent = computer.name;
+                item.dataset.id = computer.id;
+                grid.appendChild(item);
+
+                item.onclick = () => {
+                    document.querySelectorAll('.computer-icon-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    hiddenInput.value = computer.id;
+                };
+            });
+        })
+        .catch(error => {
+            console.error('Error loading computers:', error);
+            // Có thể thêm fallback tại đây nếu cần
+        });
+}
+
+function sendNotification() {
+    const target = document.getElementById('target_computer').value;
+    const type = document.getElementById('notification_type').value;
+    const message = document.getElementById('notification_message').value;
+    const action = document.getElementById('required_action').value;
+
+    if (!message) {
+        Swal.fire('Lỗi', 'Vui lòng nhập nội dung thông báo', 'error');
+        return;
+    }
+
+    const data = {
+        target_computer_id: target === 'all' ? null : parseInt(target),
+        notification_type: type,
+        message: message,
+        required_action: action
+    };
+
+    Swal.fire({
+        title: 'Xác nhận gửi thông báo?',
+        text: `Bạn đang gửi thông báo đến ${target === 'all' ? 'TẤT CẢ máy tính' : 'máy tính #' + target}`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Gửi ngay',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const url = target === 'all'
+                ? '/admin/broadcast_notification'
+                : `/admin/send_notification/${target}`;
+
+            const payload = {
+                title: 'Thông báo từ quản lý',
+                message: message,
+                type: type
+            };
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Thành công', 'Thông báo đã được gửi', 'success');
+                } else {
+                    Swal.fire('Lỗi', data.message || 'Gửi thông báo thất bại', 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Lỗi', 'Không thể kết nối đến server', 'error');
+            });
+        }
+    });
+}
+</script>

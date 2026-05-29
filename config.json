@@ -1,0 +1,6 @@
+{
+    "database_uri": "postgresql+psycopg2://DPTIUH:libiuh2025@localhost:5432/lab_manager",
+    "server_host": "0.0.0.0",
+    "server_port": 5000,
+    "client_server_url": "http://192.168.100.2:5000"
+}   

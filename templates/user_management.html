@@ -1,0 +1,631 @@
+<!-- Quản lý tài khoản -->
+<div id="user-management" class="tab-content">
+    <h2 class="section-title">
+        <i class="fas fa-users"></i> Quản lý tài khoản
+    </h2>
+    <div class="d-flex gap-3" style="align-items: flex-start; flex-wrap: wrap;">
+        <div class="form-container" style="flex:1; min-width:270px; max-width:340px;">
+            <div style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="fas fa-user-plus"></i> Thêm tài khoản</div>
+            <div class="form-group">
+                <label for="newStudentId">Mã sinh viên</label>
+                <input type="text" id="newStudentId" placeholder="Nhập mã sinh viên" autocomplete="off" inputmode="text">
+            </div>
+            <div class="form-group">
+                <label for="newName">Họ tên</label>
+                <input type="text" id="newName" placeholder="Nhập họ tên" autocomplete="off" inputmode="text" lang="vi">
+            </div>
+            <div class="form-group">
+                <label for="newClass">Lớp</label>
+                <input type="text" id="newClass" placeholder="Nhập lớp" autocomplete="off" inputmode="text">
+            </div>
+            <div class="form-group">
+                <label for="newKhoaVien">Khoa/Viện</label>
+                <select id="newKhoaVien">
+                    <option value="">-- Chọn khoa/viện --</option>
+                    <option value="Khoa Công nghệ Cơ khí">Khoa Công nghệ Cơ khí</option>
+                    <option value="Khoa Công nghệ Thông tin">Khoa Công nghệ Thông tin</option>
+                    <option value="Khoa Công nghệ Điện">Khoa Công nghệ Điện</option>
+                    <option value="Khoa Công nghệ Điện tử">Khoa Công nghệ Điện tử</option>
+                    <option value="Khoa Công nghệ Động lực">Khoa Công nghệ Động lực</option>
+                    <option value="Khoa Công nghệ Nhiệt - Lạnh">Khoa Công nghệ Nhiệt - Lạnh</option>
+                    <option value="Khoa Công nghệ May - Thời trang">Khoa Công nghệ May - Thời trang</option>
+                    <option value="Khoa Công nghệ Hóa học">Khoa Công nghệ Hóa học</option>
+                    <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
+                    <option value="Khoa Quản trị Kinh doanh">Khoa Quản trị Kinh doanh</option>
+                    <option value="Khoa Thương mại - Du lịch">Khoa Thương mại - Du lịch</option>
+                    <option value="Khoa Kỹ thuật Xây dựng">Khoa Kỹ thuật Xây dựng</option>
+                    <option value="Khoa Luật">Khoa Luật</option>
+                    <option value="Viện Tài chính - Kế toán">Viện Tài chính - Kế toán</option>
+                    <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
+                    <option value="Viện Khoa học Công nghệ và Quản lý Môi trường">Viện Khoa học Công nghệ và Quản lý Môi trường</option>
+                    <option value="Khoa Khoa học Cơ bản">Khoa Khoa học Cơ bản</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">Mật khẩu</label>
+                <input type="password" id="newPassword" placeholder="Nhập mật khẩu" autocomplete="new-password">
+            </div>
+            <button id="addUserBtn" class="btn btn-success" style="width:100%;margin-top:8px;">
+                <i class="fas fa-plus"></i> Thêm tài khoản
+            </button>
+        </div>
+        <div class="table-container mt-0" style="flex:2; min-width:320px;">
+            <div class="d-flex justify-content-between align-items-center mb-2" style="gap: 0.75rem; flex-wrap: wrap;">
+                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                    <input type="text" id="searchUser" placeholder="Tìm kiếm tài khoản..." style="width: 250px; padding: 0.22rem 0.7rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.92rem;">
+                    <button id="syncAllFirebaseBtn" class="btn btn-warning" style="white-space: nowrap;">
+                        <i class="fas fa-sync"></i> Đồng bộ Firebase
+                    </button>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 0.9rem; color: #666;">Hiển thị:</span>
+                    <select id="recordsPerPage" style="padding: 0.22rem 0.5rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.92rem;">
+                        <option value="5">5 bản ghi</option>
+                        <option value="10" selected>10 bản ghi</option>
+                        <option value="20">20 bản ghi</option>
+                        <option value="50">50 bản ghi</option>
+                    </select>
+                </div>
+            </div>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Mã SV</th>
+                        <th>Họ tên</th>
+                        <th>Lớp</th>
+                        <th>Khoa/Viện</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align:center;color:#888;">
+                            Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- Phân trang -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div id="recordsInfo" style="font-size: 0.9rem; color: #666;"></div>
+                <div class="pagination" id="pagination">
+                    <!-- Pagination buttons will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.pagination {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.pagination button {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.pagination button:hover {
+    background: #f0f0f0;
+}
+
+.pagination button.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pagination button:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+// Biến toàn cục để quản lý phân trang
+let currentPage = 1;
+let recordsPerPage = 10;
+let totalRecords = 0;
+let currentSearchTerm = '';
+let searchTimeout;
+let allUsers = []; // Lưu trữ tất cả user để phân trang frontend
+
+// Hàm escape HTML để ngăn chặn XSS
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Hàm tạo phân trang
+function createPagination(totalRecords, currentPage, recordsPerPage) {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    const pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    // Nút Previous
+    paginationHTML += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="loadUsers(${currentPage - 1})">
+        <i class="fas fa-chevron-left"></i>
+    </button>`;
+    
+    // Hiển thị các trang
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        paginationHTML += `<button onclick="loadUsers(1)">1</button>`;
+        if (startPage > 2) {
+            paginationHTML += `<span style="padding: 5px;">...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `<button class="${i === currentPage ? 'active' : ''}" onclick="loadUsers(${i})">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationHTML += `<span style="padding: 5px;">...</span>`;
+        }
+        paginationHTML += `<button onclick="loadUsers(${totalPages})">${totalPages}</button>`;
+    }
+    
+    // Nút Next
+    paginationHTML += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="loadUsers(${currentPage + 1})">
+        <i class="fas fa-chevron-right"></i>
+    </button>`;
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+// Hàm cập nhật thông tin bản ghi
+function updateRecordsInfo(totalRecords, currentPage, recordsPerPage) {
+    const startRecord = (currentPage - 1) * recordsPerPage + 1;
+    const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+    
+    const recordsInfo = document.getElementById('recordsInfo');
+    recordsInfo.textContent = `Hiển thị ${startRecord}-${endRecord} trong tổng số ${totalRecords} bản ghi`;
+}
+
+// Hàm cập nhật bảng người dùng
+function updateUserTable(users) {
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = '';
+    
+    if (users.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center;color:#888;">
+                    ${currentSearchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có tài khoản nào'}
+                </td>
+            </tr>`;
+        return;
+    }
+    
+    users.forEach(user => {
+        tbody.innerHTML += `
+        <tr>
+            <td>${escapeHtml(user.student_id)}</td>
+            <td>${escapeHtml(user.name)}</td>
+            <td>${escapeHtml(user.class_name)}</td>
+            <td>${escapeHtml(user.khoa_vien || '')}</td>
+            <td>
+                <button class="btn btn-warning btn-sm" style="margin-right:4px;" 
+                    onclick="editUser('${user.id}', '${escapeHtml(user.student_id)}', '${escapeHtml(user.name)}', '${escapeHtml(user.class_name)}', '${escapeHtml(user.khoa_vien || '')}')">
+                    <i class="fas fa-edit"></i> Sửa
+                </button>
+                <button class="btn btn-danger btn-sm" style="margin-left:2px;" onclick="deleteUser('${user.id}')">
+                    <i class="fas fa-trash"></i> Xóa
+                </button>
+            </td>
+        </tr>`;
+    });
+}
+
+// Hàm lọc và phân trang dữ liệu
+function filterAndPaginateUsers(users, searchTerm, page, limit) {
+    // Lọc dữ liệu theo search term
+    let filteredUsers = users;
+    if (searchTerm) {
+        filteredUsers = users.filter(user => 
+            (user.student_id && user.student_id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (user.class_name && user.class_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (user.khoa_vien && user.khoa_vien.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }
+    
+    // Phân trang
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+    
+    return {
+        users: paginatedUsers,
+        total: filteredUsers.length
+    };
+}
+
+// Hàm tải dữ liệu người dùng
+function loadUsers(page = 1) {
+    currentPage = page;
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5" style="text-align:center;color:#888;">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải...
+            </td>
+        </tr>`;
+    
+    // Nếu đã có dữ liệu, chỉ cần phân trang lại
+    if (allUsers.length > 0) {
+        const result = filterAndPaginateUsers(allUsers, currentSearchTerm, currentPage, recordsPerPage);
+        updateUserTable(result.users);
+        createPagination(result.total, currentPage, recordsPerPage);
+        updateRecordsInfo(result.total, currentPage, recordsPerPage);
+        return;
+    }
+    
+    // Tải dữ liệu lần đầu hoặc khi cần refresh
+    fetch('/admin/users')
+        .then(res => res.json())
+        .then(data => {
+            // Xử lý response từ server
+            if (data.users) {
+                // Server hỗ trợ phân trang
+                allUsers = data.users;
+                totalRecords = data.total || data.users.length;
+            } else {
+                // Server chưa hỗ trợ phân trang, trả về toàn bộ dữ liệu
+                allUsers = Array.isArray(data) ? data : [];
+                totalRecords = allUsers.length;
+            }
+            
+            // Áp dụng filter và phân trang
+            const result = filterAndPaginateUsers(allUsers, currentSearchTerm, currentPage, recordsPerPage);
+            updateUserTable(result.users);
+            createPagination(result.total, currentPage, recordsPerPage);
+            updateRecordsInfo(result.total, currentPage, recordsPerPage);
+        })
+        .catch(err => {
+            console.error('Load users error:', err);
+            document.getElementById('userTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center;color:#888;">
+                        <i class="fas fa-exclamation-triangle"></i> Lỗi khi tải dữ liệu
+                    </td>
+                </tr>`;
+        });
+}
+
+// Tải dữ liệu ban đầu khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers(1);
+});
+
+// Hàm refresh dữ liệu từ server
+function refreshUserData() {
+    allUsers = []; // Reset cache
+    loadUsers(currentPage);
+}
+
+// Xử lý thay đổi số bản ghi trên trang
+document.getElementById('recordsPerPage').addEventListener('change', function() {
+    recordsPerPage = parseInt(this.value);
+    currentPage = 1; // Reset về trang đầu
+    loadUsers(1);
+});
+
+// Xử lý tìm kiếm với debounce
+document.getElementById('searchUser').addEventListener('input', function() {
+    const searchTerm = this.value.trim();
+    
+    // Clear timeout cũ
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // Đặt timeout mới để tránh gọi API quá nhiều
+    searchTimeout = setTimeout(() => {
+        currentSearchTerm = searchTerm;
+        currentPage = 1; // Reset về trang đầu khi tìm kiếm
+        
+        // Nếu đã có dữ liệu, chỉ cần filter và phân trang lại
+        if (allUsers.length > 0) {
+            const result = filterAndPaginateUsers(allUsers, currentSearchTerm, currentPage, recordsPerPage);
+            updateUserTable(result.users);
+            createPagination(result.total, currentPage, recordsPerPage);
+            updateRecordsInfo(result.total, currentPage, recordsPerPage);
+        } else {
+            loadUsers(1);
+        }
+    }, 300); // Delay 300ms
+});
+
+function getFirebaseSyncStatus() {
+    return fetch('/admin/firebase_sync_status')
+        .then(res => res.json())
+        .catch(() => null);
+}
+
+function pollFirebaseSyncStatus(swalInstance, interval = 2000) {
+    getFirebaseSyncStatus().then(status => {
+        if (!status) {
+            swalInstance.update({ html: 'Không thể lấy trạng thái đồng bộ. Thử lại sau.' });
+            return;
+        }
+
+        const message = `Đang đồng bộ: <strong>${status.synced}/${status.total}</strong><br>Lỗi: <strong>${status.failed}</strong><br>Đã bắt đầu: ${status.started_at || '-'}<br>${status.running ? 'Vui lòng chờ...' : 'Đã hoàn thành.'}`;
+        swalInstance.update({ html: message });
+
+        if (status.running) {
+            setTimeout(() => pollFirebaseSyncStatus(swalInstance, interval), interval);
+        } else {
+            swalInstance.update({ icon: status.failed > 0 ? 'warning' : 'success', title: 'Đồng bộ hoàn tất', confirmButtonText: 'OK' });
+            document.getElementById('syncAllFirebaseBtn').disabled = false;
+            document.getElementById('syncAllFirebaseBtn').innerHTML = '<i class="fas fa-sync"></i> Đồng bộ Firebase';
+        }
+    });
+}
+
+document.getElementById('syncAllFirebaseBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khởi động...';
+
+    fetch('/admin/sync_all_users_to_firebase', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Không thể bắt đầu đồng bộ');
+            }
+
+            Swal.fire({
+                title: 'Đang đồng bộ Firebase',
+                html: 'Khởi động đồng bộ. Vui lòng đợi...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                    pollFirebaseSyncStatus(Swal);
+                }
+            });
+        })
+        .catch(err => {
+            Swal.fire('Lỗi', err.message || 'Đã xảy ra sự cố', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync"></i> Đồng bộ Firebase';
+        });
+});
+
+// Định nghĩa danh sách khoa/viện
+const ALL_KHOA_VIEN = [
+    "Khoa Công nghệ Cơ khí",
+    "Khoa Công nghệ Thông tin",
+    "Khoa Công nghệ Điện",
+    "Khoa Công nghệ Điện tử",
+    "Khoa Công nghệ Động lực",
+    "Khoa Công nghệ Nhiệt - Lạnh",
+    "Khoa Công nghệ May - Thời trang",
+    "Khoa Công nghệ Hóa học",
+    "Khoa Ngoại ngữ",
+    "Khoa Quản trị Kinh doanh",
+    "Khoa Thương mại - Du lịch",
+    "Khoa Kỹ thuật Xây dựng",
+    "Khoa Luật",
+    "Viện Tài chính - Kế toán",
+    "Viện Công nghệ Sinh học và Thực phẩm",
+    "Viện Khoa học Công nghệ và Quản lý Môi trường",
+    "Khoa Khoa học Cơ bản"
+];
+
+function getCSRFToken() {
+    // Implement CSRF token retrieval if needed
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+function editUser(id, studentId, name, className, khoaVien) {
+    // Tạo form HTML cho SweetAlert
+    const form = document.createElement('div');
+    form.innerHTML = `
+        <div class="form-group">
+            <label for="swalStudentId">Mã sinh viên</label>
+            <input type="text" id="swalStudentId" class="swal2-input" value="${studentId || ''}" placeholder="Mã sinh viên">
+        </div>
+        <div class="form-group">
+            <label for="swalName">Họ tên</label>
+            <input type="text" id="swalName" class="swal2-input" value="${name || ''}" placeholder="Họ tên">
+        </div>
+        <div class="form-group">
+            <label for="swalClass">Lớp</label>
+            <input type="text" id="swalClass" class="swal2-input" value="${className || ''}" placeholder="Lớp">
+        </div>
+        <div class="form-group">
+            <label for="swalKhoaVien">Khoa/Viện</label>
+            <select id="swalKhoaVien" class="swal2-input">
+                <option value="">-- Chọn khoa/viện --</option>
+                ${ALL_KHOA_VIEN.map(khoa => 
+                    `<option value="${khoa}" ${khoa === khoaVien ? 'selected' : ''}>${khoa}</option>`
+                ).join('')}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="swalPassword">Mật khẩu mới (để trống nếu không đổi)</label>
+            <input type="password" id="swalPassword" class="swal2-input" placeholder="Mật khẩu mới">
+        </div>
+    `;
+
+    // Hiển thị SweetAlert với form
+    Swal.fire({
+        title: 'Sửa thông tin sinh viên',
+        html: form,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Lưu thay đổi',
+        cancelButtonText: 'Hủy',
+        preConfirm: () => {
+            return {
+                studentId: document.getElementById('swalStudentId').value,
+                name: document.getElementById('swalName').value,
+                className: document.getElementById('swalClass').value,
+                khoaVien: document.getElementById('swalKhoaVien').value,
+                password: document.getElementById('swalPassword').value
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const data = result.value;
+            
+            // Kiểm tra dữ liệu bắt buộc
+            if (!data.studentId || !data.name) {
+                Swal.fire('Lỗi', 'Mã sinh viên và Họ tên là bắt buộc', 'error');
+                return;
+            }
+
+            // Gửi request cập nhật
+            fetch(`/api/users/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ 
+                    student_id: data.studentId, 
+                    name: data.name, 
+                    class_name: data.className, 
+                    khoa_vien: data.khoaVien, 
+                    password: data.password 
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Có lỗi xảy ra khi cập nhật');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Thành công', 'Thông tin đã được cập nhật', 'success')
+                        .then(() => refreshUserData());
+                } else {
+                    Swal.fire('Lỗi', data.message || 'Cập nhật thất bại', 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Lỗi', error.message, 'error');
+                console.error('Error:', error);
+            });
+        }
+    });
+}
+
+function deleteUser(id) {
+    Swal.fire({
+        title: 'Xác nhận xóa',
+        text: 'Bạn có chắc chắn muốn xóa tài khoản này?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/api/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Xóa thất bại');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Thành công', 'Tài khoản đã được xóa', 'success')
+                        .then(() => refreshUserData());
+                } else {
+                    Swal.fire('Lỗi', data.message || 'Xóa thất bại', 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Lỗi', error.message, 'error');
+                console.error('Error:', error);
+            });
+        }
+    });
+}
+
+document.getElementById('addUserBtn').onclick = function() {
+    var studentId = document.getElementById('newStudentId').value;
+    var name = document.getElementById('newName').value;
+    var className = document.getElementById('newClass').value;
+    var khoaVien = document.getElementById('newKhoaVien').value;
+    var password = document.getElementById('newPassword').value;
+    
+    if (!studentId || !name || !password) {
+        Swal.fire('Lỗi', 'Mã sinh viên, Họ tên và Mật khẩu là bắt buộc', 'error');
+        return;
+    }
+    
+    fetch('/admin/add_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            student_id: studentId, 
+            name: name, 
+            class_name: className, 
+            khoa_vien: khoaVien, 
+            password: password 
+        })
+    }).then(res => {
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return res.json();
+        } else {
+            return res.text().then(text => {
+                throw new Error('Lỗi hệ thống: ' + text);
+            });
+        }
+    }).then(data => {
+        if (data.success) {
+            Swal.fire('Thành công!', 'Tài khoản đã được thêm', 'success').then(() => {
+                // Reset form
+                document.getElementById('newStudentId').value = '';
+                document.getElementById('newName').value = '';
+                document.getElementById('newClass').value = '';
+                document.getElementById('newKhoaVien').value = '';
+                document.getElementById('newPassword').value = '';
+                
+                // Reload current page
+                refreshUserData();
+            });
+        } else {
+            Swal.fire('Lỗi!', data.message || 'Thêm tài khoản thất bại', 'error');
+        }
+    }).catch(err => {
+        Swal.fire('Lỗi!', err.message, 'error');
+    });
+}
+</script>
