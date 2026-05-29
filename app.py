@@ -337,18 +337,16 @@ def register_client():
         if session_id and isinstance(session_id, str) and session_id.startswith('offline-'):
             session_id = None
 
+        active_session = None
         if session_id:
             active_session = Session.query.filter_by(id=session_id, logout_time=None).first()
-            if active_session and active_session.computer_id == computer.id:
-                computer.status = 'Đang sử dụng'
-            else:
-                computer.status = 'online'
-        else:
+            if active_session and active_session.computer_id != computer.id:
+                active_session = None
+
+        if not active_session:
             active_session = Session.query.filter_by(computer_id=computer.id, logout_time=None).order_by(Session.login_time.desc()).first()
-            if active_session:
-                computer.status = 'Đang sử dụng'
-            else:
-                computer.status = 'online'
+
+        computer.status = 'Đang sử dụng' if active_session else 'online'
 
         db.session.commit()
         client_apis[computer.id] = {'ip': ip, 'port': api_port}
@@ -836,7 +834,7 @@ def admin_panel():
     
     # Xử lý partial request để làm mới danh sách máy
     if request.args.get('partial') == '1':
-        return render_template('computer_management_partial.html', computers=computers, now=datetime.datetime.now())
+        return render_template('computer_management_partial.html', computers=computers, now=datetime.datetime.now(), client_idle_timeout_seconds=client_idle_timeout_seconds)
     
     return render_template('admin.html', computers=computers, users=users, now=datetime.datetime.now(), client_idle_timeout_seconds=client_idle_timeout_seconds)
 
