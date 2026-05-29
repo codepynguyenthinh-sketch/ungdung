@@ -86,6 +86,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 client_apis = {}
+server_start_time = datetime.datetime.now()
 
 firebase_sync_status = {
     'running': False,
@@ -345,13 +346,7 @@ def register_client():
         else:
             active_session = Session.query.filter_by(computer_id=computer.id, logout_time=None).order_by(Session.login_time.desc()).first()
             if active_session:
-                if previous_last_active and datetime.datetime.now() - previous_last_active > datetime.timedelta(minutes=15):
-                    active_session.logout_time = previous_last_active
-                    active_session.duration = int((active_session.logout_time - active_session.login_time).total_seconds())
-                    computer.status = 'online'
-                    active_session = None
-                else:
-                    computer.status = 'Đang sử dụng'
+                computer.status = 'Đang sử dụng'
             else:
                 computer.status = 'online'
 
@@ -1018,12 +1013,18 @@ def set_active_background():
 
 # ==== Background Tasks ====
 def check_computers_status():
+    grace_period = datetime.timedelta(seconds=app.config.get('HEARTBEAT_TIMEOUT', 15) * 6)
     while True:
         try:
             now = datetime.datetime.now()
             timeout = datetime.timedelta(seconds=app.config['HEARTBEAT_TIMEOUT'])
             
             with app.app_context():
+                since_start = now - server_start_time
+                if since_start < grace_period:
+                    time.sleep(app.config['HEARTBEAT_INTERVAL'])
+                    continue
+
                 computers = Computer.query.all()
                 for computer in computers:
                     if computer.last_active is None:
@@ -1035,8 +1036,8 @@ def check_computers_status():
                     if time_since > timeout * 3:
                         computer.status = 'offline'
                         if active_session:
-                            active_session.logout_time = now
-                            active_session.duration = int((now - active_session.login_time).total_seconds())
+                            active_session.logout_time = computer.last_active
+                            active_session.duration = int((active_session.logout_time - active_session.login_time).total_seconds())
                     elif time_since > timeout:
                         computer.status = 'Mất kết nối' if active_session else 'offline'
                     else:
