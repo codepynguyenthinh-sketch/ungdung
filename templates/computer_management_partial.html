@@ -37,11 +37,19 @@
                 <i class="fas fa-check"></i>
             </button>
         </div>
+
+        <span style="display:inline-block; width:1px; height:28px; background:var(--border-color); margin:0 0.3rem;"></span>
+
+        <button id="toggleHiddenBtn" class="btn btn-sm" onclick="toggleShowHidden()" style="padding:0.3rem 0.6rem; font-size:0.78rem; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:var(--radius-sm);">
+            <i class="fas fa-eye-slash"></i> <span id="toggleHiddenText">Hiện máy ẩn</span>
+        </button>
     </div>
 
     <div class="computer-grid">
         {% for computer in computers %}
-        <div class="computer-card {{ 'in_use' if computer.status in ['in_use', 'Active', 'Đang sử dụng'] else computer.status }}"
+        <div class="computer-card {{ 'in_use' if computer.status in ['in_use', 'Active', 'Đang sử dụng'] else computer.status }}{% if computer.is_hidden %} hidden-pc{% endif %}"
+             data-hidden="{{ 'true' if computer.is_hidden else 'false' }}"
+             {% if computer.is_hidden %}style="display:none;"{% endif %}
              onclick='showComputerPopup(
                 {{ computer.name|tojson }},
                 {{ computer.ip_address|tojson }},
@@ -99,6 +107,9 @@
                 <a id="popupRestartLink" class="btn btn-warning disabled" href="#"><i class="fas fa-redo"></i> Khởi động lại</a>
                 <a id="popupLogoutLink" class="btn btn-secondary disabled" href="#"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
                 <a id="popupRemoteLoginLink" class="btn btn-primary disabled" href="#"><i class="fas fa-sign-in-alt"></i> Đăng nhập từ xa</a>
+                <button id="popupToggleHideBtn" class="btn btn-sm" onclick="toggleComputerVisibility()" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-secondary);">
+                    <i class="fas fa-eye-slash"></i> <span id="popupToggleHideText">Ẩn máy này</span>
+                </button>
             </div>
         </div>
     </div>

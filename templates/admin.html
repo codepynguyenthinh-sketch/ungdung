@@ -1170,7 +1170,11 @@ footer {
         });
 
         // Popup functions
+        var _currentPopupComputerId = null;
+        var _showHiddenPCs = false;
+
         function showComputerPopup(name, ip, status, lastActive, id) {
+        _currentPopupComputerId = id;
         const nameEl = document.getElementById('popupComputerName');
         if (nameEl) nameEl.textContent = name && name !== 'undefined' && name !== 'null' && name.trim() !== '' ? name : 'Không có thông tin';
         const ipEl = document.getElementById('popupComputerIp');
@@ -1310,6 +1314,20 @@ footer {
                 remoteLoginBtn.onclick = function(e) { e.preventDefault(); };
             }
         }
+        const toggleHideBtn = document.getElementById('popupToggleHideBtn');
+        const toggleHideText = document.getElementById('popupToggleHideText');
+        if (toggleHideBtn && toggleHideText) {
+            const cards = document.querySelectorAll('.computer-card');
+            let isHidden = false;
+            cards.forEach(card => {
+                const onclickStr = card.getAttribute('onclick') || '';
+                if (onclickStr.includes(',' + id + ')') || onclickStr.endsWith(id + ')')) {
+                    isHidden = card.dataset.hidden === 'true';
+                }
+            });
+            toggleHideText.textContent = isHidden ? 'Hiện máy này' : 'Ẩn máy này';
+            toggleHideBtn.querySelector('i').className = isHidden ? 'fas fa-eye' : 'fas fa-eye-slash';
+        }
         const overlay = document.getElementById('computerOverlay');
         if (overlay) overlay.style.display = 'flex';
     }
@@ -1376,10 +1394,60 @@ footer {
                 const newContent = temp.querySelector('#computer-management');
                 if (newContent) {
                     document.getElementById('computer-management').innerHTML = newContent.innerHTML;
+                    if (_showHiddenPCs) {
+                        document.querySelectorAll('.computer-card[data-hidden="true"]').forEach(c => {
+                            c.style.display = '';
+                        });
+                        const btn = document.getElementById('toggleHiddenText');
+                        if (btn) btn.textContent = 'Ẩn máy ẩn';
+                        const icon = document.querySelector('#toggleHiddenBtn i');
+                        if (icon) icon.className = 'fas fa-eye';
+                    }
                 }
             })
             .catch(error => {
                 console.error('Refresh error:', error);
+            });
+    }
+
+    function toggleShowHidden() {
+        _showHiddenPCs = !_showHiddenPCs;
+        const cards = document.querySelectorAll('.computer-card[data-hidden="true"]');
+        const textEl = document.getElementById('toggleHiddenText');
+        const iconEl = document.querySelector('#toggleHiddenBtn i');
+        if (_showHiddenPCs) {
+            cards.forEach(c => { c.style.display = ''; });
+            if (textEl) textEl.textContent = 'Ẩn máy ẩn';
+            if (iconEl) iconEl.className = 'fas fa-eye';
+        } else {
+            cards.forEach(c => { c.style.display = 'none'; });
+            if (textEl) textEl.textContent = 'Hiện máy ẩn';
+            if (iconEl) iconEl.className = 'fas fa-eye-slash';
+        }
+    }
+
+    function toggleComputerVisibility() {
+        if (!_currentPopupComputerId) return;
+        fetch('/api/admin/toggle_computer_visibility/' + _currentPopupComputerId, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const action = data.is_hidden ? 'đã ẩn' : 'đã hiện';
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.computer_name + ' ' + action,
+                        timer: 1200,
+                        showConfirmButton: false
+                    }).then(() => {
+                        hideComputerPopup();
+                        refreshComputers();
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                }
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể thay đổi trạng thái ẩn/hiện' });
             });
     }
 </script>

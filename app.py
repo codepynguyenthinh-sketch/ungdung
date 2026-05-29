@@ -124,6 +124,7 @@ class Computer(db.Model):
     status = db.Column(db.String(20), default='offline')
     last_active = db.Column(db.DateTime)
     api_port = db.Column(db.Integer, default=5001)
+    is_hidden = db.Column(db.Boolean, default=False)
     sessions = db.relationship('Session', backref='computer', lazy=True)
 
 class Session(db.Model):
@@ -181,6 +182,11 @@ def init_db():
                 try:
                     with db.engine.begin() as conn:
                         conn.execute(text('ALTER TABLE computer ADD COLUMN api_port INTEGER DEFAULT 5001'))
+                except: pass
+            if 'is_hidden' not in columns:
+                try:
+                    with db.engine.begin() as conn:
+                        conn.execute(text('ALTER TABLE computer ADD COLUMN is_hidden BOOLEAN DEFAULT FALSE'))
                 except: pass
         
         if 'user' in inspector.get_table_names():
@@ -881,6 +887,19 @@ def set_client_idle_timeout():
     except (TypeError, ValueError):
         return jsonify({'success': False, 'message': 'Giá trị timeout không hợp lệ'}), 400
     except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/admin/toggle_computer_visibility/<int:computer_id>', methods=['POST'])
+def toggle_computer_visibility(computer_id):
+    try:
+        computer = db.session.get(Computer, computer_id)
+        if not computer:
+            return jsonify({'success': False, 'message': 'Không tìm thấy máy tính'}), 404
+        computer.is_hidden = not computer.is_hidden
+        db.session.commit()
+        return jsonify({'success': True, 'is_hidden': computer.is_hidden, 'computer_name': computer.name})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/get_advertisement', methods=['GET'])
