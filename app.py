@@ -343,6 +343,14 @@ def register_client():
             if active_session and active_session.computer_id != computer.id:
                 active_session = None
 
+            if not active_session:
+                closed_session = db.session.get(Session, session_id) if not isinstance(session_id, str) or session_id.isdigit() else None
+                if closed_session and closed_session.computer_id == computer.id and closed_session.logout_time:
+                    active_session = Session(user_id=closed_session.user_id, computer_id=computer.id, login_time=datetime.datetime.now())
+                    db.session.add(active_session)
+                    db.session.flush()
+                    logger.info(f"Restored session for user {closed_session.user_id} on computer {computer.id}")
+
         if not active_session:
             active_session = Session.query.filter_by(computer_id=computer.id, logout_time=None).order_by(Session.login_time.desc()).first()
 
@@ -379,10 +387,19 @@ def heartbeat():
                 client_apis[computer.id] = {'ip': computer.ip_address, 'port': computer.api_port}
             
             active_session = Session.query.filter_by(computer_id=computer.id, logout_time=None).first()
+
+            if not active_session and data.get('session_id'):
+                sid = data['session_id']
+                closed_session = db.session.get(Session, sid) if not isinstance(sid, str) or str(sid).isdigit() else None
+                if closed_session and closed_session.computer_id == computer.id and closed_session.logout_time:
+                    active_session = Session(user_id=closed_session.user_id, computer_id=computer.id, login_time=datetime.datetime.now())
+                    db.session.add(active_session)
+                    logger.info(f"Restored session for user {closed_session.user_id} on computer {computer.id} via heartbeat")
+
             computer.status = 'Đang sử dụng' if active_session else 'online'
             db.session.commit()
             timeout_seconds = int(get_setting('client_idle_timeout_seconds', 10 * 60))
-            return jsonify({'success': True, 'session_active': active_session is not None, 'client_config': {'idle_timeout_seconds': timeout_seconds}})
+            return jsonify({'success': True, 'session_active': active_session is not None, 'session_id': active_session.id if active_session else None, 'client_config': {'idle_timeout_seconds': timeout_seconds}})
         return jsonify({'success': False}), 404
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
