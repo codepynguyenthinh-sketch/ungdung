@@ -1,0 +1,204 @@
+<!-- Import Users -->
+<div id="import-users" class="tab-content">
+    <h2 class="section-title">
+        <i class="fas fa-file-import"></i> Import Users từ Excel
+    </h2>
+    <div class="form-container">
+        <a href="/admin/export_users_template" class="btn btn-primary" style="margin-bottom: 18px;">
+            <i class="fas fa-download"></i> Tải file mẫu Excel
+        </a>
+        <a href="/admin/export_users_excel" class="btn btn-success" style="margin-bottom: 18px; margin-left: 8px;">
+            <i class="fas fa-file-excel"></i> Xuất danh sách sinh viên
+        </a>
+        <button type="button" class="btn btn-warning" id="syncFirebaseBtn" style="margin-bottom: 18px; margin-left: 8px;">
+            <i class="fas fa-sync"></i> Đồng bộ Firebase
+        </button>
+
+        <form id="importForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="fileInput"><i class="fas fa-file-excel"></i> Chọn file Excel</label>
+                <input type="file" name="file" id="fileInput" accept=".xlsx,.xls" required>
+            </div>
+            <button type="submit" class="btn btn-success" id="importBtn">
+                <i class="fas fa-upload"></i> Import Users
+            </button>
+        </form>
+
+        <!-- Progress UI -->
+        <div id="importProgress" style="display:none; margin-top:24px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                <span id="importStatusIcon" style="font-size:20px;">⏳</span>
+                <span id="importStatusMsg" style="font-weight:600; font-size:15px;">Đang xử lý...</span>
+            </div>
+            <div style="background:#1a1a2e; border-radius:8px; height:24px; overflow:hidden; margin-bottom:10px;">
+                <div id="progressBar" style="height:100%; width:0%; background:linear-gradient(90deg,#2ecc71,#27ae60);
+                     border-radius:8px; transition:width 0.3s ease; display:flex; align-items:center; justify-content:center;">
+                    <span id="progressPct" style="color:#fff; font-size:12px; font-weight:700;">0%</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+                <div style="background:#0d2137; border-radius:6px; padding:8px 16px; min-width:100px; text-align:center;">
+                    <div style="font-size:22px; font-weight:700; color:#2ecc71;" id="statSuccess">0</div>
+                    <div style="font-size:11px; color:#aaa;">Thành công</div>
+                </div>
+                <div style="background:#0d2137; border-radius:6px; padding:8px 16px; min-width:100px; text-align:center;">
+                    <div style="font-size:22px; font-weight:700; color:#f39c12;" id="statSkip">0</div>
+                    <div style="font-size:11px; color:#aaa;">Bỏ qua</div>
+                </div>
+                <div style="background:#0d2137; border-radius:6px; padding:8px 16px; min-width:100px; text-align:center;">
+                    <div style="font-size:22px; font-weight:700; color:#e74c3c;" id="statErr">0</div>
+                    <div style="font-size:11px; color:#aaa;">Lỗi</div>
+                </div>
+                <div style="background:#0d2137; border-radius:6px; padding:8px 16px; min-width:100px; text-align:center;">
+                    <div style="font-size:22px; font-weight:700; color:#3498db;" id="statTotal">0</div>
+                    <div style="font-size:11px; color:#aaa;">Tổng dòng</div>
+                </div>
+            </div>
+            <div id="errorPreview" style="display:none; background:#2d0a0a; border:1px solid #c0392b;
+                 border-radius:6px; padding:10px 14px; font-size:13px; color:#e74c3c; margin-top:8px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('importForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput.files.length) return;
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    document.getElementById('importProgress').style.display = 'block';
+    document.getElementById('importBtn').disabled = true;
+    document.getElementById('importBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang import...';
+    document.getElementById('importStatusMsg').textContent = 'Đang gửi file...';
+    document.getElementById('importStatusIcon').textContent = '⏳';
+    document.getElementById('errorPreview').style.display = 'none';
+
+    fetch('/admin/import_users_stream', { method: 'POST', body: formData })
+    .then(response => {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        function read() {
+            reader.read().then(({ done, value }) => {
+                if (done) return;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                lines.forEach(line => {
+                    if (!line.startsWith('data: ')) return;
+                    try { handleEvent(JSON.parse(line.slice(6))); } catch(e) {}
+                });
+                read();
+            });
+        }
+        read();
+    }).catch(err => {
+        document.getElementById('importStatusMsg').textContent = 'Lỗi: ' + err;
+        document.getElementById('importStatusIcon').textContent = '❌';
+        resetBtn();
+    });
+});
+
+function handleEvent(data) {
+    const msg  = document.getElementById('importStatusMsg');
+    const icon = document.getElementById('importStatusIcon');
+    const bar  = document.getElementById('progressBar');
+    const pct  = document.getElementById('progressPct');
+
+    if (data.status === 'reading' || data.status === 'checking') {
+        msg.textContent = data.msg; icon.textContent = '⏳';
+        if (data.msg && data.msg.includes('dòng')) {
+            const m = data.msg.match(/[\d,]+/);
+            if (m) document.getElementById('statTotal').textContent = m[0];
+        }
+    } else if (data.status === 'progress') {
+        bar.style.width = data.pct + '%';
+        pct.textContent = data.pct + '%';
+        document.getElementById('statSuccess').textContent = data.current.toLocaleString();
+        document.getElementById('statSkip').textContent    = data.skip.toLocaleString();
+        document.getElementById('statErr').textContent     = data.err.toLocaleString();
+        document.getElementById('statTotal').textContent   = data.total.toLocaleString();
+        msg.textContent = 'Đang import... ' + data.current.toLocaleString() + ' / ' + data.total.toLocaleString();
+    } else if (data.status === 'done') {
+        bar.style.width = '100%'; pct.textContent = '100%';
+        bar.style.background = 'linear-gradient(90deg,#27ae60,#2ecc71)';
+        icon.textContent = '✅';
+        msg.textContent = 'Hoàn thành! Import ' + data.success.toLocaleString() + ' user';
+        document.getElementById('statSuccess').textContent = data.success.toLocaleString();
+        document.getElementById('statSkip').textContent    = data.skip.toLocaleString();
+        document.getElementById('statErr').textContent     = data.error.toLocaleString();
+        if (data.errors) {
+            const ep = document.getElementById('errorPreview');
+            ep.style.display = 'block'; ep.textContent = data.errors;
+        }
+        resetBtn();
+    } else if (data.status === 'error') {
+        icon.textContent = '❌'; msg.textContent = 'Lỗi: ' + data.msg;
+        bar.style.background = '#e74c3c'; resetBtn();
+    }
+}
+
+function resetBtn() {
+    const btn = document.getElementById('importBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-upload"></i> Import Users';
+}
+
+// Handle Firebase sync button
+document.getElementById('syncFirebaseBtn').addEventListener('click', function() {
+    const btn = this;
+    const originalHTML = btn.innerHTML;
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đồng bộ...';
+    
+    // Show loading Swal
+    Swal.fire({
+        title: 'Đang đồng bộ...',
+        text: 'Vui lòng chờ, quá trình có thể mất vài phút',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Send POST request
+    fetch('/admin/sync_all_users_to_firebase', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: data.message || 'Đã đồng bộ tất cả users lên Firebase',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            throw new Error(data.message || 'Có lỗi xảy ra');
+        }
+    })
+    .catch(error => {
+        console.error('Sync error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi!',
+            text: error.message || 'Không thể đồng bộ lên Firebase',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        // Re-enable button
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+});
+</script>

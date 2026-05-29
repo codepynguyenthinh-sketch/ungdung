@@ -1,0 +1,163 @@
+<div id="shadow-defender-management" class="tab-content">
+    <div class="section-title">
+        <i class="fas fa-shield-alt"></i> Quản lý Shadow Defender
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tên máy</th>
+                    <th>IP</th>
+                    <th>Ổ đĩa</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for computer in computers %}
+                <tr id="sd-row-{{ computer.id }}">
+                    <td>{{ computer.name }}</td>
+                    <td>{{ computer.ip_address }}</td>
+                    <td>
+                        <div id="sd-drives-{{ computer.id }}" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                            <span class="text-muted" style="font-size:12px;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <span id="sd-status-{{ computer.id }}" style="font-size:12px;"></span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn btn-info btn-sm" onclick="getSDStatus({{ computer.id }})">
+                            <i class="fas fa-search"></i> Kiểm tra
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="sdAction({{ computer.id }}, 'enable')">
+                            <i class="fas fa-lock"></i> Đóng băng
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="sdAction({{ computer.id }}, 'disable')">
+                            <i class="fas fa-unlock"></i> Mở băng
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="sdAction({{ computer.id }}, 'commit')">
+                            <i class="fas fa-save"></i> Commit
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Load danh sách ổ đĩa thực tế từng máy khi tab được mở
+document.addEventListener('DOMContentLoaded', function () {
+    {% for computer in computers %}
+    loadDrives({{ computer.id }});
+    {% endfor %}
+});
+
+function loadDrives(id) {
+    fetch(`/api/remote/shadow_defender/drives/${id}`)
+        .then(async res => {
+            const data = await res.json().catch(() => ({}));
+            return { ok: res.ok, status: res.status, data };
+        })
+        .then(resp => {
+            const data = resp.data || {};
+            const container = document.getElementById(`sd-drives-${id}`);
+            if (!resp.ok) {
+                const msg = data.message || 'Không kết nối được';
+                container.innerHTML = `<span class="text-danger" style="font-size:12px;">${msg}</span>`;
+                return;
+            }
+            if (!data.success || !data.drives || data.drives.length === 0) {
+                container.innerHTML = '<span class="text-danger" style="font-size:12px;">Không kết nối được</span>';
+                return;
+            }
+            container.innerHTML = '';
+            data.drives.forEach((d, i) => {
+                const chkId = `sd-chk-${id}-${d.drive.replace(':', '')}`;
+                const checked = d.drive === 'C:' ? 'checked' : '';
+                container.innerHTML += `
+                    <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                        <input type="checkbox" id="${chkId}" value="${d.drive}" ${checked}
+                               style="cursor:pointer;">
+                        ${d.label}
+                    </label>`;
+            });
+        })
+        .catch(() => {
+            const container = document.getElementById(`sd-drives-${id}`);
+            container.innerHTML = '<span class="text-muted" style="font-size:12px;">Offline</span>';
+        });
+}
+
+function getSelectedDrives(id) {
+    const container = document.getElementById(`sd-drives-${id}`);
+    const checked = container.querySelectorAll('input[type=checkbox]:checked');
+    return Array.from(checked).map(c => c.value);
+}
+
+function getSDStatus(id) {
+    const el = document.getElementById(`sd-status-${id}`);
+    el.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    fetch(`/api/remote/shadow_defender/status/${id}`)
+        .then(async res => {
+            const data = await res.json().catch(() => ({}));
+            return { ok: res.ok, status: res.status, data };
+        })
+        .then(resp => {
+            const data = resp.data || {};
+            if (!resp.ok) {
+                const msg = data.message || 'Lỗi';
+                el.innerHTML = `<span class="text-danger">${msg}</span>`;
+                if (data.suggestion) el.title = data.suggestion;
+                return;
+            }
+            const mode = data.status ? data.status.mode : 'Không xác định';
+            const isOn = mode.toLowerCase().includes('on');
+            el.innerHTML = `<span class="badge ${isOn ? 'badge-success' : 'badge-secondary'}">${mode}</span>`;
+            if (data.status && data.status.output) el.title = data.status.output;
+        })
+        .catch(() => { el.innerHTML = '<span class="text-danger">Lỗi</span>'; });
+}
+
+async function sdAction(id, action) {
+    const drives = getSelectedDrives(id);
+    if (drives.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 ổ đĩa!');
+        return;
+    }
+    const labels = { enable: 'ĐÓNG BĂNG', disable: 'MỞ BĂNG', commit: 'COMMIT' };
+    const notes = {
+        enable: 'Sau khi Restart mọi thay đổi sẽ bị mất.',
+        disable: 'Sau khi Restart thay đổi sẽ được lưu lại.',
+        commit: 'Thay đổi hiện tại sẽ được lưu vĩnh viễn dù đang đóng băng.'
+    };
+    if (!confirm(`Xác nhận ${labels[action]} các ổ: ${drives.join(', ')}?\n${notes[action]}`)) return;
+
+    const results = [];
+    for (const drive of drives) {
+        try {
+            const res = await fetch(`/api/remote/shadow_defender/${action}/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({drive})
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const msg = data.message || 'Thất bại';
+                const sug = data.suggestion ? `\nKhuyến nghị: ${data.suggestion}` : '';
+                results.push(`${drive}: ${msg}${sug}`);
+            } else {
+                results.push(`${drive}: ${data.message || (data.success ? 'OK' : 'Thất bại')}`);
+            }
+        } catch (e) {
+            results.push(`${drive}: Lỗi kết nối`);
+        }
+    }
+    alert(results.join('\n'));
+    getSDStatus(id);
+}
+</script>

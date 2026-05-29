@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý phòng máy - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+:root {
+    --bg-base: #0f0f1a;
+    --bg-surface: #1a1a2e;
+    --bg-card: #16213e;
+    --bg-card-hover: #1a2744;
+    --bg-input: #0d1b2a;
+    --border-color: rgba(0, 255, 231, 0.08);
+    --border-hover: rgba(0, 255, 231, 0.25);
+    --text-primary: #e0e6f0;
+    --text-secondary: #8892a8;
+    --text-muted: #5a6478;
+    --accent: #00ffe7;
+    --accent-rgb: 0, 255, 231;
+    --accent-blue: #4facfe;
+    --accent-purple: #a855f7;
+    --success-color: #22c55e;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --primary-color: #4facfe;
+    --secondary-color: var(--bg-card);
+    --gray-color: #5a6478;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 20px rgba(0, 255, 231, 0.1);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --border-radius: var(--radius-sm);
+    --box-shadow: var(--shadow);
+}
+
+*, *::before, *::after {
+    margin: 0; padding: 0; box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg-base);
+    background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0, 255, 231, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(79, 172, 254, 0.03) 0%, transparent 50%);
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: 80px;
+}
+
+.container {
+    max-width: 100vw;
+    margin: 0 auto;
+    padding: 1.2rem;
+    padding-bottom: 70px;
+}
+
+header {
+    background: linear-gradient(135deg, rgba(15, 15, 26, 0.97) 0%, rgba(26, 26, 46, 0.97) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    color: white;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    min-height: 56px;
+}
+
+.logo {
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: white;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.logo i {
+    font-size: 1.5rem;
+    color: var(--accent);
+    filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.5));
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 3px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+nav ul li { position: relative; }
+
+nav ul li a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+nav ul li a::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+nav ul li a:hover::before { width: 60%; }
+
+nav ul li a:hover {
+    color: var(--text-primary);
+    background: rgba(var(--accent-rgb), 0.05);
+}
+
+nav ul li a.active {
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: rgba(var(--accent-rgb), 0.2);
+}
+
+nav ul li a.active::before {
+    width: 80%;
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
+}
+
+nav ul li a i {
+    font-size: 0.9rem;
+}
+
+/* Section Titles */
+.section-title {
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.section-title i { color: var(--accent); }
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    font-size: 0.82rem;
+    font-family: var(--font);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.2px;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-sm {
+    padding: 0.25rem 0.6rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 6px !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: #0a0a1a;
+    box-shadow: 0 2px 12px rgba(79, 172, 254, 0.3);
+}
+.btn-primary:hover { box-shadow: 0 4px 20px rgba(79, 172, 254, 0.45); }
+
+.btn-success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    box-shadow: 0 2px 12px rgba(34, 197, 94, 0.3);
+}
+.btn-success:hover { box-shadow: 0 4px 20px rgba(34, 197, 94, 0.45); }
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
+}
+.btn-danger:hover { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.45); }
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #0a0a1a;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+}
+.btn-warning:hover { box-shadow: 0 4px 20px rgba(245, 158, 11, 0.45); }
+
+.btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.btn-secondary:hover { background: var(--bg-card-hover); border-color: var(--border-hover); }
+
+.btn-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: var(--accent-blue);
+    border: 1px solid var(--accent-blue);
+}
+.btn-outline-primary:hover { background: rgba(79, 172, 254, 0.1); }
+
+.btn.disabled, .btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Computer Grid */
+.computer-grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+}
+
+.computer-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.4rem;
+    transition: var(--transition);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.computer-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.computer-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-glow);
+}
+
+.computer-card:hover::before { opacity: 1; }
+
+.computer-card h3 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.computer-card .status {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.status-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Computer Status */
+.online {
+    border-color: rgba(34, 197, 94, 0.3) !important;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.02));
+}
+.online::before { background: var(--success-color); }
+.online .status-icon {
+    background: var(--success-color);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    animation: pulse-green 2s infinite;
+}
+.online .status-text { color: var(--success-color); }
+
+.offline {
+    border-color: rgba(90, 100, 120, 0.15);
+    background: var(--bg-card);
+    opacity: 0.6;
+}
+.offline .status-icon { background: var(--gray-color); }
+.offline .status-text { color: var(--gray-color); }
+
+.in_use {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+}
+.in_use::before { background: var(--warning-color); }
+.in_use .status-icon {
+    background: var(--warning-color);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+.in_use .status-text { color: var(--warning-color); }
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.4); }
+    50% { box-shadow: 0 0 12px rgba(34, 197, 94, 0.8); }
+}
+
+.status-shutdown { color: var(--danger-color) !important; }
+.status-restart { color: var(--warning-color) !important; }
+
+/* Tables */
+.table-container {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+table, .user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+}
+
+th, td {
+    padding: 0.65rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+th {
+    background: rgba(var(--accent-rgb), 0.06);
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.8px;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+td { color: var(--text-primary); }
+
+tr:hover td {
+    background: rgba(var(--accent-rgb), 0.03);
+}
+
+.table-responsive { overflow-x: auto; }
+.table-striped tbody tr:nth-of-type(odd) { background: rgba(255, 255, 255, 0.02); }
+
+/* Forms */
+.form-container {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    padding: 1.4rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-family: var(--font);
+    transition: var(--transition);
+    height: 36px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+textarea {
+    height: auto;
+    min-height: 80px;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: rgba(var(--accent-rgb), 0.4);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08);
+    background: rgba(var(--accent-rgb), 0.02);
+}
+
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+select option {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+/* Cards */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.card-body { padding: 1.2rem; }
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.card-title i { color: var(--accent); }
+
+/* Alerts */
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+.alert-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+/* File inputs */
+.custom-file { position: relative; }
+.custom-file-input { height: auto !important; padding: 0.5rem; }
+.form-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block; }
+.form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-family: var(--font);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    height: 36px;
+    transition: var(--transition);
+}
+.form-control:focus {
+    outline: none;
+    border-color: rgba(var(--accent-rgb), 0.4);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08);
+}
+
+/* Image preview */
+.image-preview img { max-width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.img-fluid { max-width: 100%; height: auto; }
+.rounded { border-radius: var(--radius-sm); }
+
+/* Tabs */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+.tab-content.active { display: block; }
+
+/* Popups */
+.overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 2000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup {
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 550px;
+    padding: 0;
+    position: relative;
+    animation: popupSlideUp 0.35s ease;
+}
+
+.popup-header {
+    padding: 1.2rem 1.5rem;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08), transparent);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.popup-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-size: 1.4rem;
+    cursor: pointer;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+.close-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger-color);
+}
+
+.popup-body { padding: 1.5rem; }
+
+.popup-info .info-row {
+    display: flex;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.popup-info .info-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    min-width: 140px;
+}
+.popup-info .info-value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.popup-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+.popup-footer .btn {
+    min-width: 0;
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+/* Screen View */
+.screens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+
+.screen-item {
+    position: relative;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: var(--transition);
+    cursor: pointer;
+    background: var(--bg-card);
+}
+.screen-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--border-hover);
+}
+
+/* Preview Container */
+.preview-container {
+    border-color: var(--border-color) !important;
+    background: var(--bg-card) !important;
+    border-radius: var(--radius) !important;
+}
+
+/* Utility Classes */
+.text-success { color: var(--success-color) !important; }
+.text-danger { color: var(--danger-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-primary { color: var(--accent-blue) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+.mb-0 { margin-bottom: 0; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mt-0 { margin-top: 0; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.ml-2 { margin-left: 0.5rem; }
+.my-3 { margin-top: 1rem; margin-bottom: 1rem; }
+
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.justify-content-between { justify-content: space-between; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.8rem; }
+.flex-wrap { flex-wrap: wrap; }
+.text-center { text-align: center; }
+
+/* Pagination */
+.pagination {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.pagination button {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: var(--font);
+    transition: var(--transition);
+}
+.pagination button:hover {
+    background: rgba(var(--accent-rgb), 0.08);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    color: var(--accent);
+}
+.pagination button.active {
+    background: rgba(var(--accent-rgb), 0.15);
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    font-weight: 600;
+}
+.pagination button:disabled {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Footer */
+footer {
+    width: 100%;
+    text-align: center;
+    padding: 0.8rem 0;
+    background: var(--bg-base);
+    color: #fff;
+    letter-spacing: 1px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popupSlideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(var(--accent-rgb), 0.2);
+    border-radius: 50%;
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 2rem; height: 2rem;
+    border: 0.2em solid rgba(var(--accent-rgb), 0.15);
+    border-right-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.4); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-container { flex-direction: column; gap: 0.6rem; padding: 0.8rem; }
+    nav ul { flex-wrap: wrap; justify-content: center; }
+    .computer-grid { grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
+    .computer-card { height: 75px; }
+    .btn { width: 100%; }
+    .screens-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+    .popup { width: 96%; margin: 0.5rem; }
+}
+
+@media (max-width: 900px) {
+    nav ul { flex-wrap: wrap; justify-content: flex-start; }
+    nav ul li { margin-bottom: 2px; }
+    nav ul li a { font-size: 0.72rem; padding: 0.3rem 0.5rem; }
+    .computer-grid { grid-template-columns: repeat(8, 1fr); }
+}
+
+@media (max-width: 600px) {
+    nav ul { display: none; }
+    .menu-dropdown { display: block; width: 100%; margin: 0 auto 10px; }
+    .computer-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.menu-dropdown {
+    display: none;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Special Buttons */
+.btn-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 2px 12px rgba(168, 85, 247, 0.3);
+}
+.btn-purple:hover { box-shadow: 0 4px 20px rgba(168, 85, 247, 0.45); }
+
+/* SweetAlert2 Dark Theme */
+.swal2-popup {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius) !important;
+}
+.swal2-title { color: var(--text-primary) !important; }
+.swal2-html-container { color: var(--text-secondary) !important; }
+.swal2-input, .swal2-textarea {
+    background: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+</style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-desktop"></i> Quản lý phòng máy
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" data-tab="computer-management"><i class="fas fa-server"></i> Phòng máy</a></li>
+                    <li><a href="#" data-tab="user-management"><i class="fas fa-users"></i> Tài khoản</a></li>
+                    <li><a href="#" data-tab="import-users"><i class="fas fa-file-import"></i> Import Excel</a></li>
+                    <li><a href="#" data-tab="report-month"><i class="fas fa-chart-bar"></i> Báo cáo</a></li>
+                    <li><a href="#" data-tab="screen-view"><i class="fas fa-tv"></i> Xem màn hình</a></li>
+                    <li><a href="#" data-tab="notification"><i class="fas fa-bell"></i> Gửi thông báo</a></li>
+                    <li><a href="#" data-tab="ads-management"><i class="fas fa-ad"></i> Quảng cáo</a></li>
+                    <li><a href="#" data-tab="background-management"><i class="fas fa-image"></i> Background</a></li>
+                    <li><a href="#" data-tab="shadow-defender-management"><i class="fas fa-shield-alt"></i> Shadow Defender</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+
+    <!-- Flash Messages -->
+    <div id="flash-messages" style="position:fixed;top:70px;right:20px;z-index:9999;max-width:420px;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash-alert flash-{{ category }}" style="
+              background: {% if category == 'success' %}#1a7a4a{% elif category == 'error' %}#7a1a1a{% else %}#5a5a1a{% endif %};
+              color: #fff; padding: 12px 16px; margin-bottom: 8px; border-radius: 6px;
+              border-left: 4px solid {% if category == 'success' %}#2ecc71{% elif category == 'error' %}#e74c3c{% else %}#f1c40f{% endif %};
+              box-shadow: 0 2px 8px rgba(0,0,0,0.4); font-size: 14px; line-height: 1.4;">
+              {{ message }}
+              <button onclick="this.parentElement.remove()" style="float:right;background:none;border:none;color:#fff;cursor:pointer;font-size:16px;margin-left:8px;">×</button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+    <script>
+      // Auto-dismiss flash messages after 6 seconds
+      setTimeout(function() {
+        document.querySelectorAll('.flash-alert').forEach(el => el.remove());
+      }, 6000);
+      // Nếu có flash message, tự động mở tab import-users nếu URL hash trống
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                    if (!window.location.hash) {
+                        // Mặc định mở tab Quản lý phòng máy thay vì Import khi có flash
+                        window.location.hash = 'computer-management';
+                    }
+        {% endif %}
+      {% endwith %}
+    </script>
+     <div class="container">
+        {% include 'computer_management.html' %}
+        {% include 'user_management.html' %}
+        {% include 'import_users.html' %}
+        {% include 'report_month.html' %}
+        {% include 'screen_view.html' %}
+        {% include 'chat.html' %}
+        {% include 'ads_admin.html' %}
+        {% include 'background_management.html' %}
+        {% include 'shadow_defender.html' %}
+    </div>
+
+    <footer>
+        <div style="color:var(--accent);text-shadow:0 0 8px rgba(0,255,231,0.4);font-weight:600;font-size:13px;">
+            Quản lý phòng máy v2.0 &mdash; Nguyễn Quang Thịnh &bull; IUH
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+            &copy; 2025 All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Náº¿u truy cáº­p nháº§m /admin/shutdown/ khÃ´ng cÃ³ id, chuyá»ƒn hÆ°á»›ng vá» trang admin
+        if (window.location.pathname === '/admin/shutdown/' || window.location.pathname === '/admin/shutdown') {
+            window.location.href = '/admin';
+        }
+        // Khi load trang, náº¿u cÃ³ hash (vÃ­ dá»¥ #user-management), tá»± Ä‘á»™ng active Ä‘Ãºng tab
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash) {
+                const tabId = window.location.hash.substring(1);
+                const tabContent = document.getElementById(tabId);
+                const tabLink = document.querySelector('nav a[data-tab="' + tabId + '"]');
+                if (tabContent && tabLink) {
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+                    tabContent.classList.add('active');
+                    tabLink.classList.add('active');
+                }
+            }
+            // Khi click menu, cập nhật hash trên URL
+            document.querySelectorAll('nav a').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    const tabId = this.getAttribute('data-tab');
+                    window.location.hash = tabId;
+                });
+            });
+        });
+        // Tab switching
+        document.querySelectorAll('nav a').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs and links
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.querySelectorAll('nav a').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                // Add active class to clicked tab
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                this.classList.add('active');
+            });
+        });
+
+        // Auto refresh chá»‰ pháº§n Quáº£n lÃ½ phÃ²ng mÃ¡y
+        setInterval(function() {
+            if (document.getElementById('computer-management').classList.contains('active')) {
+                fetch('/admin?partial=1')
+                    .then(response => response.text())
+                    .then(html => {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+                        const newContent = temp.querySelector('#computer-management');
+                        if (newContent) {
+                            document.getElementById('computer-management').innerHTML = newContent.innerHTML;
+                        }
+                    });
+            }
+        }, 10000); // 10 giây
+
+        function updateClientTimeout() {
+            const timeoutInput = document.getElementById('clientTimeoutInput');
+            const timeoutValue = parseInt(timeoutInput.value, 10);
+            if (!timeoutValue || timeoutValue < 1) {
+                Swal.fire('Lỗi', 'Vui lòng nhập giá trị timeout hợp lệ (phút).', 'error');
+                return;
+            }
+            fetch('/api/set_client_idle_timeout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ timeout_seconds: timeoutValue * 60 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Thành công', 'Timeout client đã được cập nhật.', 'success');
+                } else {
+                    Swal.fire('Lỗi', data.message || 'Không thể cập nhật timeout.', 'error');
+                }
+            })
+            .catch(() => {
+                Swal.fire('Lỗi', 'Không thể kết nối tới server.', 'error');
+            });
+        }
+        
+        // User management functions
+        // Biáº¿n lÆ°u tráº¡ng thÃ¡i sá»­a (chá»‰ khai bÃ¡o 1 láº§n)
+        let editingUserId = null;
+
+        function addUser() {
+            const data = {
+                student_id: document.getElementById('newStudentId').value,
+                name: document.getElementById('newName').value,
+                class_name: document.getElementById('newClass').value,
+                khoa_vien: document.getElementById('newKhoaVien').value,
+                password: document.getElementById('newPassword').value
+            };
+            if (!data.student_id || !data.name || !data.class_name || (!editingUserId && !data.password)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Thiếu thông tin',
+                    text: 'Vui lÃ²ng Ä‘iá»n Ä‘áº§y Ä‘á»§ thÃ´ng tin!'
+                });
+                return;
+            }
+            if (editingUserId) {
+                // Gửi API cập nhật
+                fetch(`/api/users/${editingUserId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ThÃ nh cÃ´ng',
+                            text: 'Cáº­p nháº­t tÃ i khoáº£n thÃ nh cÃ´ng!'
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lá»—i',
+                            text: data.message || 'Lá»—i khÃ´ng xÃ¡c Ä‘á»‹nh'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lá»—i',
+                        text: 'CÃ³ lá»—i xáº£y ra khi cáº­p nháº­t tÃ i khoáº£n'
+                    });
+                });
+            } else {
+                // ThÃªm má»›i
+                fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ThÃ nh cÃ´ng',
+                            text: 'ThÃªm tÃ i khoáº£n thÃ nh cÃ´ng!'
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lá»—i',
+                            text: data.message || 'Lá»—i khÃ´ng xÃ¡c Ä‘á»‹nh'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lá»—i',
+                        text: 'CÃ³ lá»—i xáº£y ra khi thÃªm tÃ i khoáº£n'
+                    });
+                });
+            }
+        }
+
+        // HÃ m gÃ¡n dá»¯ liá»‡u vÃ o form khi báº¥m Sá»­a
+        function editUser(id, studentId, name, className, khoaVien) {
+            console.log('editUser:', {id, studentId, name, className, khoaVien});
+            document.getElementById('newStudentId').value = studentId;
+            document.getElementById('newName').value = name;
+            document.getElementById('newClass').value = className;
+            document.getElementById('newKhoaVien').value = khoaVien;
+            document.getElementById('newPassword').value = '';
+            editingUserId = id;
+            const btn = document.getElementById('addUserBtn');
+            btn.innerHTML = '<i class="fas fa-save"></i> Cập nhật';
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-warning');
+        }
+
+            // TÃ¬m kiáº¿m tÃ i khoáº£n
+            const searchInput = document.getElementById('searchUser');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const filter = this.value.toLowerCase();
+                    const rows = document.querySelectorAll('#userTableBody tr');
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(filter) ? '' : 'none';
+                    });
+                });
+            }
+        function deleteUser(userId) {
+            Swal.fire({
+                title: 'Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a tÃ i khoáº£n nÃ y?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#e74c3c'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/users/${userId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đã xóa',
+                                text: 'TÃ i khoáº£n Ä‘Ã£ Ä‘Æ°á»£c xÃ³a!'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lá»—i',
+                                text: data.message || 'Lá»—i khi xÃ³a tÃ i khoáº£n'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lá»—i',
+                            text: 'CÃ³ lá»—i xáº£y ra khi xÃ³a tÃ i khoáº£n'
+                        });
+                    });
+                }
+            });
+        }
+
+        // Add event listener for add user button
+        document.addEventListener('DOMContentLoaded', function() {
+            const addUserBtn = document.getElementById('addUserBtn');
+            if (addUserBtn) {
+                addUserBtn.addEventListener('click', addUser);
+            }
+            // Náº¿u Ä‘ang sá»­a, báº¥m láº¡i nÃºt sáº½ reset vá» thÃªm má»›i
+            document.getElementById('newStudentId').addEventListener('input', function() {
+                if (editingUserId) {
+                    editingUserId = null;
+                    const btn = document.getElementById('addUserBtn');
+                    btn.innerHTML = '<i class="fas fa-plus"></i> ThÃªm tÃ i khoáº£n';
+                    btn.classList.remove('btn-warning');
+                    btn.classList.add('btn-success');
+                }
+            });
+        });
+
+        // Popup functions
+        var _currentPopupComputerId = null;
+        var _showHiddenPCs = false;
+
+        function showComputerPopup(name, ip, status, lastActive, id) {
+        _currentPopupComputerId = id;
+        const nameEl = document.getElementById('popupComputerName');
+        if (nameEl) nameEl.textContent = name && name !== 'undefined' && name !== 'null' && name.trim() !== '' ? name : 'Không có thông tin';
+        const ipEl = document.getElementById('popupComputerIp');
+        if (ipEl) {
+            ipEl.textContent = ip && ip !== 'undefined' && ip !== 'null' && ip.trim() !== '' ? ip : 'Không có thông tin';
+        }
+        const statusElement = document.getElementById('popupComputerStatus');
+        if (statusElement) {
+            let statusText = 'Đang sử dụng';
+            if (status === 'online') statusText = 'Online';
+            else if (status === 'offline') statusText = 'Offline';
+            else if (status === 'Tắt máy') statusText = 'Tắt máy';
+            else if (status === 'Khởi động lại') statusText = 'Khởi động lại';
+            else if (status && status !== 'undefined' && status !== 'null' && status.trim() !== '') statusText = status;
+            statusElement.textContent = statusText;
+            statusElement.className = 'status-text';
+            statusElement.classList.remove('text-success', 'text-danger', 'status-shutdown', 'status-restart', 'text-warning');
+            if (status === 'online') {
+                statusElement.classList.add('text-success');
+            } else if (status === 'offline') {
+                statusElement.classList.add('text-danger');
+            } else if (status === 'Tắt máy') {
+                statusElement.classList.add('status-shutdown');
+            } else if (status === 'Khởi động lại') {
+                statusElement.classList.add('status-restart');
+            } else {
+                statusElement.classList.add('text-warning');
+            }
+        }
+        const lastActiveEl = document.getElementById('popupComputerLastActive');
+        if (lastActiveEl) {
+            lastActiveEl.textContent = lastActive && lastActive !== 'undefined' && lastActive !== 'null' && lastActive.trim() !== '' ? lastActive : 'Không có thông tin';
+        }
+        const shutdownLink = document.getElementById('popupShutdownLink');
+        if (shutdownLink) {
+            if (id && id !== 'undefined') {
+                shutdownLink.href = '/admin/shutdown/' + id;
+                shutdownLink.classList.remove('disabled');
+            } else {
+                shutdownLink.href = '#';
+                shutdownLink.classList.add('disabled');
+            }
+        }
+        const restartLink = document.getElementById('popupRestartLink');
+        if (restartLink) {
+            if (id && id !== 'undefined') {
+                restartLink.href = '/admin/restart/' + id;
+                restartLink.classList.remove('disabled');
+            } else {
+                restartLink.href = '#';
+                restartLink.classList.add('disabled');
+            }
+        }
+        const logoutBtn = document.getElementById('popupLogoutLink');
+        if (logoutBtn) {
+            if (id && id !== 'undefined') {
+                logoutBtn.classList.remove('disabled');
+                logoutBtn.onclick = function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Bạn có chắc muốn đăng xuất user trên máy này?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Đăng xuất',
+                        cancelButtonText: 'Hủy',
+                        confirmButtonColor: '#2c3e50'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('/admin/logout/' + id)
+                                .then(response => response.text())
+                                .then(() => {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Đã gửi lệnh đăng xuất!',
+                                        timer: 1200,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        hideComputerPopup();
+                                        location.reload();
+                                    });
+                                })
+                                .catch(() => {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Lỗi',
+                                        text: 'Không gửi được lệnh đăng xuất!'
+                                    });
+                                });
+                        }
+                    });
+                };
+            } else {
+                logoutBtn.classList.add('disabled');
+                logoutBtn.onclick = function(e) { e.preventDefault(); };
+            }
+        }
+        const remoteLoginBtn = document.getElementById('popupRemoteLoginLink');
+        if (remoteLoginBtn) {
+            if (id && id !== 'undefined') {
+                remoteLoginBtn.classList.remove('disabled');
+                remoteLoginBtn.onclick = function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Bạn có chắc muốn đăng nhập từ xa vào máy này?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Đăng nhập từ xa',
+                        cancelButtonText: 'Hủy',
+                        confirmButtonColor: '#007bff'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('/admin/remote_login/' + id)
+                                .then(response => response.text())
+                                .then(() => {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Đã gửi lệnh đăng nhập từ xa!',
+                                        timer: 1200,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        hideComputerPopup();
+                                        location.reload();
+                                    });
+                                })
+                                .catch(() => {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Lỗi',
+                                        text: 'Không gửi được lệnh đăng nhập từ xa!'
+                                    });
+                                });
+                        }
+                    });
+                };
+            } else {
+                remoteLoginBtn.classList.add('disabled');
+                remoteLoginBtn.onclick = function(e) { e.preventDefault(); };
+            }
+        }
+        const toggleHideBtn = document.getElementById('popupToggleHideBtn');
+        const toggleHideText = document.getElementById('popupToggleHideText');
+        if (toggleHideBtn && toggleHideText) {
+            const cards = document.querySelectorAll('.computer-card');
+            let isHidden = false;
+            cards.forEach(card => {
+                const onclickStr = card.getAttribute('onclick') || '';
+                if (onclickStr.includes(',' + id + ')') || onclickStr.endsWith(id + ')')) {
+                    isHidden = card.dataset.hidden === 'true';
+                }
+            });
+            toggleHideText.textContent = isHidden ? 'Hiện máy này' : 'Ẩn máy này';
+            toggleHideBtn.querySelector('i').className = isHidden ? 'fas fa-eye' : 'fas fa-eye-slash';
+        }
+        const overlay = document.getElementById('computerOverlay');
+        if (overlay) overlay.style.display = 'flex';
+    }
+
+    function hideComputerPopup() {
+        const overlay = document.getElementById('computerOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    function confirmShutdownAll() {
+        Swal.fire({
+            title: 'Bạn có chắc muốn tắt tất cả máy?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Tắt tất cả',
+            cancelButtonText: 'Hủy',
+            confirmButtonColor: '#d33'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('shutdownAllForm');
+                if (form) form.submit();
+            }
+        });
+    }
+
+    function confirmShutdownOnline() {
+        Swal.fire({
+            title: 'Bạn có chắc muốn tắt tất cả máy online?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Tắt máy online',
+            cancelButtonText: 'Hủy',
+            confirmButtonColor: '#8e44ad'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('shutdownOnlineForm');
+                if (form) form.submit();
+            }
+        });
+    }
+
+    function confirmRestartAll() {
+        Swal.fire({
+            title: 'Bạn có chắc muốn khởi động lại tất cả máy?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Khởi động lại',
+            cancelButtonText: 'Hủy',
+            confirmButtonColor: '#f39c12'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('restartAllForm');
+                if (form) form.submit();
+            }
+        });
+    }
+
+    function refreshComputers() {
+        fetch('/admin?partial=1')
+            .then(response => response.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                const newContent = temp.querySelector('#computer-management');
+                if (newContent) {
+                    document.getElementById('computer-management').innerHTML = newContent.innerHTML;
+                    if (_showHiddenPCs) {
+                        document.querySelectorAll('.computer-card[data-hidden="true"]').forEach(c => {
+                            c.style.display = '';
+                        });
+                        const btn = document.getElementById('toggleHiddenText');
+                        if (btn) btn.textContent = 'Ẩn máy ẩn';
+                        const icon = document.querySelector('#toggleHiddenBtn i');
+                        if (icon) icon.className = 'fas fa-eye';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Refresh error:', error);
+            });
+    }
+
+    function toggleShowHidden() {
+        _showHiddenPCs = !_showHiddenPCs;
+        const cards = document.querySelectorAll('.computer-card[data-hidden="true"]');
+        const textEl = document.getElementById('toggleHiddenText');
+        const iconEl = document.querySelector('#toggleHiddenBtn i');
+        if (_showHiddenPCs) {
+            cards.forEach(c => { c.style.display = ''; });
+            if (textEl) textEl.textContent = 'Ẩn máy ẩn';
+            if (iconEl) iconEl.className = 'fas fa-eye';
+        } else {
+            cards.forEach(c => { c.style.display = 'none'; });
+            if (textEl) textEl.textContent = 'Hiện máy ẩn';
+            if (iconEl) iconEl.className = 'fas fa-eye-slash';
+        }
+    }
+
+    function toggleComputerVisibility() {
+        if (!_currentPopupComputerId) return;
+        fetch('/api/admin/toggle_computer_visibility/' + _currentPopupComputerId, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const action = data.is_hidden ? 'đã ẩn' : 'đã hiện';
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.computer_name + ' ' + action,
+                        timer: 1200,
+                        showConfirmButton: false
+                    }).then(() => {
+                        hideComputerPopup();
+                        refreshComputers();
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                }
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể thay đổi trạng thái ẩn/hiện' });
+            });
+    }
+</script>
+    
+</body>
+</html>

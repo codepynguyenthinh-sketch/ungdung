@@ -1,0 +1,117 @@
+============================================================
+  DPT LAB MANAGER - HƯỚNG DẪN CÀI ĐẶT VÀ BUILD
+  Phiên bản 2.0 | Khoa Điện - Phòng Thực Hành
+============================================================
+
+CẤU TRÚC THƯ MỤC
+-----------------
+DPT-Lab-Manager/
+├── client_app.py          ← App chạy trên máy SINH VIÊN
+├── app.py                 ← App SERVER (máy giáo viên/quản lý)
+├── build.bat              ← Build cả Client + Server
+├── build_client_only.bat  ← Chỉ build Client
+├── DPT-CLIENT.spec        ← Cấu hình build Client
+├── DPT-SERVER.spec        ← Cấu hình build Server
+├── requirements.txt       ← Danh sách thư viện Python
+├── server_config.json     ← Cấu hình IP server (SỬA FILE NÀY!)
+├── firebase_key.json      ← Firebase credentials (bạn tự tạo)
+├── myicon.ico             ← Icon ứng dụng (bạn tự tạo/thêm)
+├── logo.png               ← Logo hiển thị (bạn tự thêm)
+├── background.jpg         ← Ảnh nền login client
+├── templates/             ← HTML templates cho web admin
+└── static/                ← CSS/JS cho web admin
+
+
+YÊU CẦU HỆ THỐNG
+-----------------
+- Windows 10/11 (64-bit)
+- Python 3.10 hoặc 3.11 (KHÔNG dùng Python 3.12+)
+  Tải tại: https://www.python.org/downloads/release/python-3119/
+  ⚠️ Khi cài Python: TÍCH VÀO "Add Python to PATH"
+- Kết nối Internet (để cài thư viện lần đầu)
+
+
+BƯỚC 1 - CHUẨN BỊ TRƯỚC KHI BUILD
+-----------------------------------
+1. Đảm bảo có file myicon.ico (icon ứng dụng)
+   - Nếu chưa có: tạo icon trắng tạm bằng cách bỏ icon khỏi spec
+     hoặc dùng bất kỳ file .ico nào
+
+2. Sửa server_config.json:
+   - Mở file server_config.json
+   - Đổi "server_host" thành IP máy chủ (máy giáo viên)
+   - Ví dụ: "server_host": "192.168.1.50"
+
+3. Nếu dùng Firebase: đặt file firebase_key.json vào thư mục gốc
+
+4. Nếu KHÔNG dùng Firebase: không cần file này
+
+
+BƯỚC 2 - BUILD ỨNG DỤNG
+--------------------------
+Chạy build.bat với quyền Administrator:
+  → Chuột phải vào build.bat → "Run as administrator"
+
+Script sẽ tự động:
+  [1/4] Cài thư viện Python (pip install -r requirements.txt)
+  [2/4] Build DPT-Client.exe
+  [3/4] Build DPT-Server.exe  
+  [4/4] Copy các file cần thiết vào thư mục dist\
+
+Kết quả sau build:
+  dist\DPT-Client.exe      ← Copy sang các máy sinh viên
+  dist\DPT-Server.exe      ← Chạy trên máy giáo viên
+  dist\server_config.json  ← Đi kèm với Client
+
+
+BƯỚC 3 - TRIỂN KHAI
+---------------------
+Máy SERVER (Giáo viên/Quản lý):
+  1. Chạy DPT-Server.exe với quyền Admin
+  2. Web admin mở tại: http://localhost:5000
+  3. Đảm bảo tường lửa cho phép port 5000
+
+Máy CLIENT (Sinh viên):
+  1. Copy 2 file sang mỗi máy: DPT-Client.exe + server_config.json
+  2. Sửa server_config.json: điền đúng IP máy server
+  3. Chạy DPT-Client.exe một lần đầu với quyền Admin
+     → App sẽ tự đăng ký chạy cùng Windows
+     → Từ đó về sau tự động khởi động khi bật máy
+
+
+TÍNH NĂNG BẢO VỆ (Sinh viên không tắt được)
+----------------------------------------------
+✅ Tự động khởi động cùng Windows (Registry Startup)
+✅ Watchdog VBS: nếu bị kill thì tự restart sau 5 giây
+✅ Chặn phím: Alt+F4, Ctrl+Shift+Esc, Windows key, Alt+Tab
+✅ Yêu cầu quyền Admin để chạy
+✅ Cửa sổ không có nút X (đóng) khi đang khoá máy
+
+
+CÁC LỖI THƯỜNG GẶP
+--------------------
+Lỗi: "Python không được cài đặt"
+  → Cài Python 3.10/3.11, tích "Add to PATH"
+
+Lỗi: "Không thể cài đặt dependencies"
+  → Chạy cmd với quyền Admin: pip install -r requirements.txt
+
+Lỗi: "Build Client thất bại" - thiếu myicon.ico
+  → Tạo file icon hoặc bỏ dòng icon khỏi DPT-CLIENT.spec
+
+Lỗi: Firebase không kết nối
+  → Kiểm tra file firebase_key.json có đúng và còn hiệu lực
+
+Lỗi: Client không kết nối được server
+  → Kiểm tra server_config.json, ping IP server, kiểm tra firewall
+
+
+BUILD CHỈ CLIENT (nhanh hơn)
+------------------------------
+Nếu chỉ cần cập nhật app client (không đổi server):
+  → Chuột phải build_client_only.bat → Run as administrator
+
+
+============================================================
+  Liên hệ hỗ trợ: Bộ môn Điện - Phòng Thực Hành ĐPT
+============================================================
